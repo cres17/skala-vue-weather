@@ -15,7 +15,7 @@ Vue 3 Composition API를 사용해 지역별 날씨 검색 화면을 만들었�
 3. 변수 변경 감시 (`watch`, `watchEffect`)
    - `watch(selectedCityInfo)`로 상태바 문구가 바뀔 때 이전 값과 현재 값을 콘솔에 출력했습니다.
    - `watchEffect()` 내부에서 `searchQuery`를 사용해, 검색어 입력 시마다 자동으로 콘솔 로그가 출력되도록 했습니다.
-<img src="/screenshot/console_log.png" width="200" height="400">
+<img src="/screenshot/console_log.png" width="800" height="1600">
 
 4. 검색 결과 표시
    - `filteredWeatherList`에 데이터가 있으면 `v-for`로 날씨 카드를 출력합니다.
