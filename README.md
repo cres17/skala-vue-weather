@@ -2,7 +2,7 @@
 
 Vue에서 배운 디렉티브와 이벤트 처리를 한 화면에 적용해 보기 위해 만든 지역별 날씨 화면이다. 서울, 부산, 도쿄, 삿포로의 날씨를 카드로 보여 주고, 도시 검색 입력과 카드별 상세 정보 기능을 넣었다.
 
-<img src="/screenshot/main_page.png">
+<img src="/screenshot/main_page.png" width="500" height="1000">
 
 ## 적용한 내용
 
@@ -20,7 +20,7 @@ Vue에서 배운 디렉티브와 이벤트 처리를 한 화면에 적용해 보
 
 검색 input은 `v-model` 대신 `:value`와 `@input`을 사용했다. 입력할 때마다 이벤트 객체의 `target.value`를 `searchedCity`에 저장하고, 화면 아래에 현재 입력한 도시명을 출력한다. 양방향 바인딩이 실제로 어떤 방식으로 동작하는지 확인하려고 이렇게 작성했다.
 
-<img src="/screenshot/search_input.png">
+<img src="/screenshot/search_input.png" width="500" height="1000">
 
 ### 4. 카드 클릭과 이벤트 수식어
 
@@ -29,7 +29,7 @@ Vue에서 배운 디렉티브와 이벤트 처리를 한 화면에 적용해 보
 - `상세 날씨 보기`: 해당 도시의 습도와 바람 정보를 펼치거나 닫는다.
 - `알림 보기`: 현재 날씨 상태를 `window.alert`로 보여 준다.
 
-<img src="/screenshot/alram_button.png">
+<img src="/screenshot/alram_button.png" width="500" height="1000">
 
 ### 5. `v-show`로 상세 정보 열기/닫기
 
