@@ -1,5 +1,4 @@
-# Vue 날씨 검색 과제
-Vue 3 Composition API를 사용해 지역별 날씨 검색 화면을 만들었습니다.
+# Weather_Composition
 
 <img src="/screenshot/main.png" width="500" height="1000">
 ## 적용한 내용
