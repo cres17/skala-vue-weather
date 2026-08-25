@@ -1,4 +1,4 @@
-# Weather Mockup
+# Vue_Practice_Weather
 
 Vue 학습 과제를 브랜치별로 관리하는 저장소입니다.
 
