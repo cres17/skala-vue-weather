@@ -1,5 +1,14 @@
 # Weather Mockup
 
+Vue 학습 과제를 브랜치별로 관리하는 저장소입니다.
+
+## 브랜치별 과제
+
+| 번호 | 과제 | 브랜치 | 상태 |
+| --- | --- | --- | --- |
+| 1 | Weather Mockup | `1-weather-mockup` | 완료 |
+| 2 | Weather Composition | 추후 생성 | 예정 |
+
 Vue에서 배운 디렉티브와 이벤트 처리를 한 화면에 적용해 보기 위해 만든 지역별 날씨 화면이다. 서울, 부산, 도쿄, 삿포로의 날씨를 카드로 보여 주고, 도시 검색 입력과 카드별 상세 정보 기능을 넣었다.
 
 <img src="/screenshot/main_page.png">
