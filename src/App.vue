@@ -55,7 +55,7 @@ function showDetail(city) {
 function toggleFavorite(city) {
   const index = favoriteCityIds.value.indexOf(city.id)
   if (index >= 0) favoriteCityIds.value.splice(index, 1)
-  else favoriteCityIds.value.push(city.id)
+  else favorㅋiteCityIds.value.push(city.id)
 }
 
 function isFavorite(city) {
