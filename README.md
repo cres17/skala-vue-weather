@@ -36,4 +36,4 @@ Vue에서 배운 디렉티브와 이벤트 처리를 한 화면에 적용해 보
 각 도시 데이터에는 `showDetails` 값을 두었다. 상세 버튼을 누르면 이 값이 `true`와 `false`로 바뀌고, `v-show`가 습도와 바람 영역을 보이거나 숨긴다. 카드를 다시 만들지 않고 CSS의 `display`만 바뀌는 점을 확인할 수 있다.
 
 
-<img src="/screenshot/detail_button.png">
+<img src="/screenshot/detail_button.png" width="500" height="1000">
