@@ -1,7 +1,7 @@
 # Vue 날씨 검색 과제
 Vue 3 Composition API를 사용해 지역별 날씨 검색 화면을 만들었습니다.
 
-<img src="/screenshot/main.png">
+<img src="/screenshot/main.png" width="200" height="400">
 ## 적용한 내용
 
 1. 반응형 상태 관리
@@ -15,20 +15,20 @@ Vue 3 Composition API를 사용해 지역별 날씨 검색 화면을 만들었�
 3. 변수 변경 감시 (`watch`, `watchEffect`)
    - `watch(selectedCityInfo)`로 상태바 문구가 바뀔 때 이전 값과 현재 값을 콘솔에 출력했습니다.
    - `watchEffect()` 내부에서 `searchQuery`를 사용해, 검색어 입력 시마다 자동으로 콘솔 로그가 출력되도록 했습니다.
-<img src="/screenshot/console_log.png">
+<img src="/screenshot/console_log.png" width="200" height="400">
 
 4. 검색 결과 표시
    - `filteredWeatherList`에 데이터가 있으면 `v-for`로 날씨 카드를 출력합니다.
    - 검색어가 없으면 computed 결과가 전체 목록이므로 원본 날씨 데이터가 표시됩니다.
    - 검색 결과가 없으면 `v-if` / `v-else`로 “일치하는 도시가 없어요” 안내 화면을 보여 줍니다.
-<img src="/screenshot/search.png">
-<img src="/screenshot/search_null.png">
+<img src="/screenshot/search.png" width="200" height="400">
+<img src="/screenshot/search_null.png" width="200" height="400">
 
 5. 개인 확장 기능
    - `temperatureUnit` 상태를 추가해 섭씨와 화씨를 전환할 수 있게 했고, `watch`로 단위 변경도 감지합니다.
    - `favoriteCityIds` 배열에 즐겨찾기한 도시 ID를 저장하고, `favoriteCities` computed로 즐겨찾기 도시와 개수를 계산했습니다.
-<img src="/screenshot/fahrenheit.png">
-<img src="/screenshot/favorites.png">
+<img src="/screenshot/fahrenheit.png" width="200" height="400">
+<img src="/screenshot/favorites.png" width="200" height="400">
 
 ## 트러블 슈팅
 
@@ -73,5 +73,3 @@ const filteredWeatherList = computed(() => {
 ```
 
 배운 점: 카드처럼 넓은 영역을 클릭 가능하게 만들 때 내부 버튼의 동작도 함께 확인해야 했습니다. 단순히 기능이 작동하는지만 보는 것이 아니라, 한 번의 클릭에 의도하지 않은 함수가 실행되지 않는지도 확인하는 습관이 필요하다고 느꼈습니다.
-
-AI는 코드를 그대로 가져오는 용도보다는, 왜 문제가 생겼는지 이해하고 적절한 해결 방법을 찾는 과정에서 특히 도움이 됐습니다. 이후에는 해결 코드를 적용한 뒤 검색어를 비우는 경우, 별 버튼을 여러 번 누르는 경우, 상세보기 버튼을 누르는 경우를 직접 확인했습니다.
