@@ -5,324 +5,45 @@
   color: #173b4f;
   background: #f4f8fa;
   font-synthesis: none;
+  --text-color: #173b4f;
+  --heading-color: #143449;
+  --surface-color: #fff;
+  --line-color: #dfeaec;
 }
+
 * {
   box-sizing: border-box;
 }
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgb(210 239 240 / 48%),
+      transparent 32rem
+    ),
+    #f4f8fa;
+}
+
 body {
-  margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  margin: 0;
 }
+
 button,
 input {
   font: inherit;
 }
+
 button {
   cursor: pointer;
 }
-.app-shell {
-  width: min(1120px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: 74px 0 56px;
-}
-.hero {
-  margin-bottom: 32px;
-}
-.eyebrow {
-  margin: 0 0 12px;
-  color: #238c9f;
-  font-weight: 700;
-  font-size: 0.78rem;
-  letter-spacing: 0.13em;
-}
-.hero-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: center;
-}
-h1 {
-  margin: 0;
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  letter-spacing: -0.06em;
-  line-height: 1.2;
-  color: #143449;
-}
-.hero-heading p {
-  margin: 12px 0 0;
-  color: #6c818d;
-  font-size: 1rem;
-}
-.unit-switch {
-  display: flex;
-  padding: 4px;
-  background: #e4edf1;
-  border-radius: 12px;
-}
-.unit-switch button {
-  border: 0;
-  padding: 8px 12px;
-  color: #6c818d;
-  background: transparent;
-  border-radius: 8px;
-  font-weight: 700;
-}
-.unit-switch button.active {
-  background: white;
-  color: #197d91;
-  box-shadow: 0 2px 7px #4767791c;
-}
-.toolbar {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  max-width: 570px;
-  padding: 0 16px;
-  background: white;
-  border: 1px solid #dce7eb;
-  border-radius: 14px;
-  box-shadow: 0 5px 20px #385c6c0a;
-}
-.search-box > span {
-  color: #5c8a98;
-  font-size: 1.75rem;
-  line-height: 1;
-  transform: rotate(-20deg);
-}
-.search-box input {
-  min-width: 0;
-  width: 100%;
-  padding: 15px 0;
-  border: 0;
-  outline: 0;
-  color: #173b4f;
-  background: transparent;
-}
-.search-box input::placeholder {
-  color: #9aabb3;
-}
-.clear-button {
-  border: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #e8eff2;
-  color: #59717d;
-}
-.result-count {
-  margin: 0;
-  color: #6e858f;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-.status-bar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin: 0 0 20px;
-  padding: 12px 16px;
-  color: #39707d;
-  background: #e2f3f3;
-  border-radius: 10px;
-  font-size: 0.9rem;
-}
-.status-bar span {
-  color: #32aa9b;
-  font-size: 0.7rem;
-}
-.summary-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 24px;
-  padding: 13px 17px;
-  background: #173b4f;
-  border-radius: 13px;
-  color: #e8fafb;
-}
-.summary-card > span {
-  color: #f8d66c;
-}
-.summary-card p {
-  flex: 1;
-  margin: 0;
-  font-size: 0.92rem;
-}
-.summary-card small {
-  color: #a8ced6;
-}
-.weather-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-}
-.weather-card {
-  padding: 21px;
-  min-height: 245px;
-  background: white;
-  border: 1px solid #e2ebee;
-  border-radius: 18px;
-  box-shadow: 0 8px 25px #385c6c0a;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s,
-    border-color 0.2s;
-  outline: none;
-}
-.weather-card:hover,
-.weather-card:focus {
-  transform: translateY(-4px);
-  border-color: #83c7d1;
-  box-shadow: 0 14px 28px #1c62771a;
-}
-.card-topline {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.city-name {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-.favorite-button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: #91a9b2;
-  font-size: 1.35rem;
-}
-.favorite-button.favorite {
-  color: #f2b635;
-}
-.weather-main {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 21px 0;
-}
-.weather-icon {
-  font-size: 3.5rem;
-  filter: drop-shadow(0 5px 4px #5e98a822);
-}
-.weather-main strong {
-  color: #173b4f;
-  font-size: 2rem;
-  letter-spacing: -0.07em;
-}
-.weather-main p {
-  margin: 4px 0 0;
-  color: #5c9ba5;
-  font-weight: 600;
-}
-.weather-meta {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin: 0 0 19px;
-  padding: 11px 0;
-  border-top: 1px solid #e9eff1;
-  border-bottom: 1px solid #e9eff1;
-}
-.weather-meta div {
-  display: flex;
-  gap: 6px;
-}
-.weather-meta dt {
-  color: #8b9da5;
-  font-size: 0.78rem;
-}
-.weather-meta dd {
-  margin: 0;
-  color: #52717e;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-.detail-button {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  color: #247c8d;
-  background: transparent;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-.detail-button span {
-  font-size: 1.15rem;
-  line-height: 0.8;
-}
-.empty-state {
-  padding: 65px 20px;
-  text-align: center;
-  background: white;
-  border: 1px dashed #bfd6dc;
-  border-radius: 18px;
-}
-.empty-state > span {
-  font-size: 3rem;
-}
-.empty-state h2 {
-  margin: 15px 0 6px;
-  font-size: 1.25rem;
-}
-.empty-state p {
-  margin: 0 0 18px;
-  color: #78909a;
-}
-.empty-state button {
-  border: 0;
-  padding: 10px 16px;
-  border-radius: 9px;
-  background: #247c8d;
-  color: white;
-  font-weight: 700;
-}
-@media (max-width: 760px) {
-  .app-shell {
-    width: min(100% - 28px, 520px);
-    padding-top: 42px;
-  }
-  .hero-heading {
-    align-items: flex-start;
-  }
-  .hero-heading p {
-    line-height: 1.6;
-  }
-  .weather-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .result-count {
-    padding-left: 4px;
-  }
-  .summary-card small {
-    display: none;
-  }
-}
-@media (max-width: 470px) {
-  .hero-heading {
-    flex-direction: column;
-  }
-  .unit-switch {
-    align-self: flex-end;
-  }
-  .weather-grid {
-    grid-template-columns: 1fr;
-  }
-  .weather-card {
-    min-height: auto;
-  }
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgb(35 140 159 / 25%);
+  outline-offset: 2px;
 }

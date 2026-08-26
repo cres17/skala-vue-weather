@@ -1,75 +1,193 @@
-# Weather Composition
-Vue 3 Composition API를 사용해 지역별 날씨 검색 화면을 만들었습니다.
+# Weather Components
 
-<img src="/screenshot/main.png" width="500" height="1000">
-## 적용한 내용
+Vue 3 Composition API로 작성된 지역별 날씨 화면을 역할에 따라 컴포넌트로 나눈 프로젝트입니다. 기존 `2-weather-composition` 브랜치의 검색, 도시 선택, 상세보기 같은 동작은 그대로 두고 컴포넌트 구조를 다시 잡았습니다.
 
-1. 반응형 상태 관리
-   - `searchQuery`, `selectedCityInfo`, `weatherList`를 `ref`로 선언했습니다.
-   - 검색어 입력과 도시 카드 클릭으로 값이 바뀌면 화면이 바로 다시 렌더링됩니다.
+처음에는 요구사항에 맞춰 파일만 네 개로 나누면 된다고 생각했습니다. 그런데 그렇게 나누면 상태가 여러 파일에 흩어지고 오히려 흐름을 따라가기 어려웠습니다. 그래서 데이터는 `WeatherParent.vue`가 가지고, 하위 컴포넌트는 `props`로 값을 받아 표시한 뒤 사용자 동작만 `emit`으로 부모에게 알려 주는 방식으로 정리했습니다.
 
-2. 검색 도시 (`computed`)
-   - `filteredWeatherList`에서 `searchQuery`가 비어 있으면 `weatherList` 전체를 반환합니다.
-   - 검색어가 있으면 `filter()`로 도시 이름에 검색어가 포함된 데이터만 반환합니다.
+## 기존 구조에서 바꾸고 싶었던 점
 
-3. 변수 변경 감시 (`watch`, `watchEffect`)
-   - `watch(selectedCityInfo)`로 상태바 문구가 바뀔 때 이전 값과 현재 값을 콘솔에 출력했습니다.
-   - `watchEffect()` 내부에서 `searchQuery`를 사용해, 검색어 입력 시마다 자동으로 콘솔 로그가 출력되도록 했습니다.
-<img src="/screenshot/console_log.png" width="500" height="1000">
+페이지 안에 검색창, 날씨 목록, 카드 UI와 상태 변경 로직이 함께 있으면 처음에는 빠르게 만들 수 있지만 기능이 늘어날수록 다음과 같은 문제가 생깁니다.
 
-4. 검색 결과 표시
-   - `filteredWeatherList`에 데이터가 있으면 `v-for`로 날씨 카드를 출력합니다.
-   - 검색어가 없으면 computed 결과가 전체 목록이므로 원본 날씨 데이터가 표시됩니다.
-   - 검색 결과가 없으면 `v-if` / `v-else`로 “일치하는 도시가 없어요” 안내 화면을 보여 줍니다.
-<img src="/screenshot/search.png" width="500" height="1000">
-<img src="/screenshot/search_null.png" width="500" height="1000">
+- 검색창 디자인을 수정할 때 전체 페이지 코드를 같이 확인해야 합니다.
+- 날씨 카드를 다른 화면에서 재사용하기 어렵습니다.
+- 어떤 컴포넌트가 상태를 변경하는지 추적하기 어려워집니다.
+- 같은 모양의 박스가 여러 곳에 중복될 가능성이 큽니다.
+- 컴포넌트 하나의 스타일 변경이 다른 영역에 영향을 줄 수 있습니다.
 
-5. 개인 확장 기능
-   - `temperatureUnit` 상태를 추가해 섭씨와 화씨를 전환할 수 있게 했고, `watch`로 단위 변경도 감지합니다.
-   - `favoriteCityIds` 배열에 즐겨찾기한 도시 ID를 저장하고, `favoriteCities` computed로 즐겨찾기 도시와 개수를 계산했습니다.
-<img src="/screenshot/fahrenheit.png" width="500" height="1000">
-<img src="/screenshot/favorites.png"  width="500" height="1000">
+결국 상태와 계산 로직은 부모에 모으고, 검색·공통 레이아웃·날씨 카드처럼 화면에서 구분되는 부분만 별도 컴포넌트로 분리했습니다.
+
+## 데이터 흐름
+
+컴포넌트 간 데이터는 한 방향으로 흐르도록 만들었습니다.
+
+```text
+WeatherParent
+   │
+   ├─ props ──> SearchBar
+   │              └─ update-query emit ──> WeatherParent
+   │
+   └─ props ──> WeatherCard
+                  ├─ select-card emit ───────> WeatherParent
+                  ├─ click-detail emit ──────> WeatherParent
+                  └─ toggle-favorite emit ──> WeatherParent
+```
+
+부모가 원본 상태를 가지고 자식은 전달받은 값을 화면에 표시합니다. 자식에서 검색어나 선택 상태를 직접 수정하지 않고 이벤트를 보낸 뒤, 부모가 실제 값을 변경합니다. 덕분에 상태가 바뀌는 지점을 `WeatherParent.vue` 한 곳에서 확인할 수 있습니다.
+
+## 컴포넌트별 역할
+
+### `WeatherParent.vue`
+
+화면에서 사용하는 원본 데이터와 상태 변경 로직을 관리하는 컨테이너 컴포넌트입니다.
+
+- 도시별 날씨 목록 관리
+- 검색어, 선택 도시, 온도 단위, 즐겨찾기 상태 관리
+- 검색 결과와 즐겨찾기 목록을 `computed`로 계산
+- 검색어와 선택 상태 변경을 `watch`, `watchEffect`로 확인
+- 섭씨/화씨 변환
+- 자식 컴포넌트에서 전달한 이벤트 처리
+
+검색된 도시 목록이나 선택 상태처럼 원본 데이터에서 계산할 수 있는 값은 별도의 상태로 중복 저장하지 않고 `computed`로 만들었습니다. 원본 값 하나만 바뀌어도 관련 화면이 자동으로 갱신되기 때문에 데이터가 서로 어긋날 가능성을 줄일 수 있습니다.
+
+### `BaseDashboardCard.vue`
+
+검색 영역과 날씨 목록 영역에서 반복되는 테두리, 배경, 여백, 그림자 같은 공통 디자인을 담당합니다.
+
+내용을 직접 알지 못하는 레이아웃 컴포넌트로 만들기 위해 `slot`을 사용했습니다. 기본 slot에는 주요 콘텐츠를 넣고, 필요한 경우 `header`, `footer` named slot을 함께 사용할 수 있습니다. `variant` 값에 따라 검색 카드와 콘텐츠 카드의 여백 및 모양도 다르게 적용됩니다.
+
+이 컴포넌트는 내부 콘텐츠의 데이터를 관리하지 않습니다. 어떤 내용을 넣을지는 부모가 결정하고, `BaseDashboardCard`는 공통된 외형만 제공합니다.
+
+### `SearchBar.vue`
+
+도시 검색 입력과 검색 결과 개수 표시를 담당합니다.
+
+- `query`, `resultCount`, `totalCount`를 props로 전달받음
+- 사용자가 입력하면 `update-query` 이벤트 발생
+- 검색어가 있으면 검색 결과 개수, 없으면 전체 도시 개수 표시
+- 검색어 초기화 버튼 제공
+
+입력창에 `v-model`로 부모 상태를 직접 연결하는 대신 `:value`와 `@input`을 사용했습니다. 입력값은 부모가 내려주고 변경 요청은 이벤트로 올리는 구조라서 부모와 자식의 책임이 분명합니다.
+
+### `WeatherCard.vue`
+
+도시 한 곳의 날씨 정보를 보여 주는 컴포넌트입니다.
+
+- 도시 객체, 표시용 온도, 즐겨찾기 여부, 선택 여부를 props로 전달받음
+- 카드 선택 시 `select-card` 이벤트 발생
+- 상세보기 클릭 시 `click-detail` 이벤트 발생
+- 즐겨찾기 클릭 시 `toggle-favorite` 이벤트 발생
+- 마우스뿐 아니라 Enter 키로도 카드 선택 가능
+
+날씨 카드 자체는 어떤 도시가 최종 선택되었는지 결정하지 않습니다. 클릭된 도시 객체를 부모로 전달하고, 부모가 선택 상태를 갱신한 뒤 다시 `selected` prop으로 내려줍니다.
+
+## 요구사항별 구현 내용
+
+### 1. `WeatherParent.vue`에서 모든 반응형 데이터 유지
+
+검색어, 도시 목록, 선택 도시, 온도 단위와 즐겨찾기 ID를 모두 `WeatherParent.vue`의 `ref`로 관리했습니다. 검색 결과, 선택 도시 안내 문구, 가장 따뜻한 도시와 즐겨찾기 목록은 이 값들을 바탕으로 `computed`에서 계산합니다.
+
+상태를 부모에 모아 둔 이유는 여러 자식 컴포넌트가 같은 데이터를 필요로 하기 때문입니다. 예를 들어 검색 결과 개수는 `SearchBar`에 필요하고 실제 검색 결과는 날씨 카드 목록에 필요합니다. 둘 중 한쪽에 상태를 두면 형제 컴포넌트 사이의 전달 과정이 복잡해지므로 공통 부모가 관리하는 방식이 적합했습니다.
+
+### 2. `BaseDashboardCard.vue`로 공통 디자인 통합
+
+검색 박스와 날씨 목록 박스에서 반복되는 surface 디자인을 하나의 컴포넌트로 합쳤습니다. 검색 영역에는 `variant="search"`, 목록 영역에는 `variant="content"`를 전달하여 공통된 분위기는 유지하면서 용도에 맞는 여백과 모서리 값을 적용했습니다.
+
+내부 콘텐츠는 default slot으로 받고, 목록 제목과 하단 안내는 각각 `header`, `footer` slot으로 받습니다. 덕분에 레이아웃 컴포넌트가 검색이나 날씨 데이터에 의존하지 않아도 됩니다.
+
+### 3. `SearchBar.vue`의 props와 emits 통신
+
+부모가 현재 검색어와 결과 개수를 props로 전달하고, `SearchBar`는 이를 입력창과 결과 문구에 표시합니다. 사용자가 값을 입력하거나 초기화 버튼을 누르면 다음 이벤트가 부모로 전달됩니다.
+
+```vue
+<SearchBar
+  :query="searchQuery"
+  :result-count="filteredWeatherList.length"
+  :total-count="weatherList.length"
+  @update-query="updateSearchQuery"
+/>
+```
+
+`SearchBar`는 부모 상태를 직접 수정하지 않으므로 다른 데이터 소스와 연결하더라도 컴포넌트 코드를 크게 바꿀 필요가 없습니다.
+
+### 4. `WeatherCard.vue`의 props와 emits 통신
+
+각 카드에는 도시 객체와 화면 표시용 상태를 props로 내려줍니다. 사용자가 카드를 선택하거나 상세보기 버튼을 누르면 해당 도시 객체를 이벤트 인자로 부모에게 전달합니다.
+
+```vue
+<WeatherCard
+  :city="city"
+  :temperature="formatTemperature(city.temp)"
+  :favorite="isFavorite(city)"
+  :selected="selectedCity?.id === city.id"
+  @select-card="selectCity"
+  @click-detail="showDetail"
+  @toggle-favorite="toggleFavorite"
+/>
+```
+
+기본 요구사항인 `select-card`, `click-detail` 외에 즐겨찾기 기능도 같은 통신 규칙을 따르도록 `toggle-favorite` 이벤트로 분리했습니다.
+
+### 5. 컴포넌트별 `<style scoped>` 적용
+
+각 컴포넌트의 모양은 해당 `.vue` 파일의 `<style scoped>` 안에서 관리합니다. 검색창을 수정할 때는 `SearchBar.vue`, 카드 디자인을 수정할 때는 `WeatherCard.vue`만 보면 되도록 구성했습니다.
+
+`src/styles.css`에는 글꼴, 색상 변수, box-sizing, body 배경처럼 앱 전체에서 공통으로 사용하는 최소한의 전역 스타일만 남겼습니다. 컴포넌트 스타일이 다른 영역으로 새어 나가는 문제를 줄이면서 공통 디자인 값은 계속 재사용할 수 있습니다.
+
+### 6. slot 배치와 부모 scope 유지
+
+`SearchBar`와 `WeatherCard`는 화면상으로는 `BaseDashboardCard` 내부에 들어가지만, 실제 템플릿은 `WeatherParent.vue`에서 작성합니다. Vue slot 콘텐츠는 콘텐츠를 작성한 부모 scope를 사용하므로 `searchQuery`, `filteredWeatherList`, `selectCity` 같은 부모의 상태와 함수를 바로 바인딩할 수 있습니다.
+
+즉, `BaseDashboardCard`는 **어디에 어떻게 보일지**를 담당하고 `WeatherParent`는 **무슨 데이터를 보여주고 어떤 동작을 할지**를 담당합니다. 이 구분 덕분에 공통 카드가 자식 컴포넌트의 구체적인 기능을 알 필요가 없습니다.
+
+### 7. 추가로 분리하거나 보완한 기능
+
+기본 컴포넌트 분리 외에도 구조를 확인하기 쉽도록 다음 내용을 함께 구현했습니다.
+
+- `header`, `footer` named slot 추가
+- 검색 결과가 없을 때 빈 상태 화면 제공
+- 섭씨/화씨 전환 기능 유지
+- 즐겨찾기 추가·해제와 개수 표시
+- 선택된 카드의 시각적 상태와 상태 안내 문구 표시
+- 키보드 포커스와 ARIA label을 적용해 기본 접근성 보완
+- 화면 폭에 따라 카드 목록이 3열에서 2열, 1열로 변경되는 반응형 레이아웃 적용
+
+
+## AI를 사용한 부분
+
+작업 전체를 AI가 대신하도록 맡기기보다는, 진행이 막혔거나 제가 확신하지 못한 부분을 확인하는 용도로 사용했습니다.
+
+- slot 안에 들어간 컴포넌트가 어느 scope의 데이터를 참조하는지 헷갈려서 Vue의 slot scope 동작을 확인했습니다. 설명을 참고한 뒤 실제 데이터 연결은 `WeatherParent.vue`에서 직접 해 보고 동작을 확인했습니다.
+- 카드 내부 버튼의 클릭이 카드 전체 클릭까지 이어지는 원인을 찾을 때 이벤트 버블링과 `.stop` 사용 방법을 확인했습니다.
+- ESLint 10에서 기존 설정 파일을 읽지 못하는 문제는 오류 메시지만으로 해결이 잘되지 않아 flat config 구성을 찾는 데 도움을 받았습니다. 설정을 추가한 뒤 lint와 build는 직접 다시 실행했습니다.
+
+컴포넌트를 어디까지 나눌지, 상태를 부모에 둘지, 어떤 기능을 추가할지 같은 구조 결정은 코드를 실행해 보면서 정했습니다. AI가 제안한 내용도 그대로 사용하지 않고 현재 과제 범위에 맞지 않거나 설명할 수 없는 부분은 제외했습니다.
 
 ## 트러블 슈팅
 
-이번 과제에서 고민한 부분은 검색 기능과 카드 안에 있는 버튼들의 클릭 처리였습니다. 화면에서는 자연스럽게 보이지만 상태를 직접 바꾸지 않고 유지하는 방법과 클릭 이벤트가 전달되는 방식을 이해해야 했습니다. 막힌 부분은 AI에게 현재 코드와 원하는 동작을 함께 보여 주고 원인을 설명받은 뒤 제 코드에 맞게 적용했습니다.
+### 자식 컴포넌트에서 검색어를 어떻게 변경할지
 
-### 1. 검색어를 지우면 원래 목록으로 돌아오지 않는 문제
+처음에는 검색 입력에 `v-model`을 그대로 사용하면 간단해 보였습니다. 하지만 자식이 부모 값을 직접 바꾸는 것처럼 보여 데이터 흐름이 잘 이해되지 않았습니다. `SearchBar`에는 현재 값을 prop으로 내려주고, 입력이 발생할 때 `update-query` 이벤트를 올리도록 바꿨습니다. 실제 `searchQuery` 수정은 부모의 `updateSearchQuery` 함수에서만 일어나게 했습니다.
 
-기능: 검색창에 도시 이름을 입력하면 해당 도시만 보여 주고 검색어가 비어 있으면 전체 도시 목록을 보여 줍니다.
+### slot 안의 컴포넌트가 누구의 데이터를 사용하는지 헷갈린 문제
 
-문제: 처음에는 검색할 때마다 `weatherList` 자체를 바꾸는 방향으로 생각했습니다. 하지만 이렇게 하면 검색어를 지웠을 때 원래 목록을 다시 만들거나 따로 저장해야 해서 상태가 꼬일 수 있었습니다. 공백만 입력했을 때를 어떻게 처리할지도 애매했습니다.
+이 부분이 가장 헷갈렸습니다. `SearchBar`와 `WeatherCard`가 화면에서는 `BaseDashboardCard` 안에 있으니 공통 카드가 데이터를 다시 전달해야 한다고 생각했습니다. AI의 설명과 Vue 문서를 참고해 확인해 보니 slot 콘텐츠는 작성된 위치인 부모 scope를 사용했습니다. 그래서 `WeatherParent`에서 자식 컴포넌트를 slot에 직접 배치하고 props와 emits도 바로 연결했습니다. `BaseDashboardCard`에는 레이아웃 역할만 남겼습니다.
 
-해결: AI에게 “원본 목록은 그대로 두고 검색 결과만 바꾸고 싶다”고 질문했고, `searchQuery`와 `weatherList`를 바꾸는 대신 결과를 `computed`로 계산하는 방식을 적용했습니다. `trim()`으로 공백을 제거한 값을 먼저 만들고 값이 없으면 전체 목록을 반환하도록 했습니다.
+### 상세보기나 즐겨찾기를 눌렀을 때 카드 선택도 함께 실행된 문제
 
-```js
-const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
+날씨 카드 전체에 클릭 이벤트가 있어 내부 버튼을 누르면 버튼 이벤트가 부모 요소까지 올라갔습니다. 그 결과 즐겨찾기만 바꾸려 해도 카드가 같이 선택됐습니다. 이벤트 버블링 문제라는 것을 확인한 뒤 내부 버튼에 `.stop`을 적용해 상세보기와 즐겨찾기 동작이 카드 선택과 겹치지 않게 했습니다.
 
-const filteredWeatherList = computed(() => {
-  if (!normalizedSearchQuery.value) return weatherList.value
-  return weatherList.value.filter((city) =>
-    city.name.toLowerCase().includes(normalizedSearchQuery.value),
-  )
-})
-```
+### 컴포넌트 분리 후 계산 상태가 서로 어긋날 수 있었던 문제
 
-배운 점: 검색 결과처럼 다른 상태로부터 바로 만들 수 있는 값은 따로 저장하기보다 `computed`로 관리하는 편이 안전했습니다. 원본 `weatherList`를 건드리지 않으니 검색어를 지웠을 때도 자연스럽게 전체 목록으로 돌아옵니다.
+검색 결과 수, 즐겨찾기 수, 선택된 카드처럼 같은 원본에서 파생되는 값을 각 컴포넌트에 따로 저장하면 한쪽만 갱신될 수 있습니다. 원본 `ref`는 부모에 두고 파생 값은 모두 `computed`로 계산한 뒤 필요한 결과만 자식에 전달했습니다. 덕분에 검색어, 온도 단위 또는 즐겨찾기가 바뀌면 관련 UI가 함께 갱신됩니다.
 
-### 2. 즐겨찾기·상세보기 버튼을 눌러도 카드 선택이 함께 실행되는 문제
+### 즐겨찾기가 추가되지 않던 오타
 
-기능: 날씨 카드를 클릭하면 선택한 도시의 날씨를 상태바에 표시합니다. 카드 안의 별 버튼은 즐겨찾기만 상세보기 버튼은 안내창만 실행되어야 합니다.
+기존 로직을 옮기는 과정에서 즐겨찾기 배열 변수 이름에 오타가 있어 추가 동작이 정상적으로 실행되지 않았습니다. 읽기와 쓰기에서 모두 `favoriteCityIds`를 사용하도록 이름을 통일했고, 추가와 해제를 각각 다시 확인했습니다.
 
-문제: 카드 전체에 `@click="selectCity(city)"`를 걸어 둔 상태에서 별 또는 상세보기 버튼을 눌렀더니 버튼 기능이 실행된 뒤 카드 선택 기능까지 같이 실행됐습니다. 버튼만 눌렀는데 상태바 문구까지 바뀌어서 처음에는 왜 두 함수가 실행되는지 알기 어려웠습니다.
+### ESLint 실행 시 설정 파일을 찾지 못한 문제
 
-원인: AI 도움으로 자식 요소의 클릭 이벤트가 부모 요소까지 전달되는 이벤트 버블링 때문이라는 것을 알았습니다. 버튼은 카드 안에 있으므로 버튼에서 발생한 클릭이 카드의 `@click`까지 전달되고 있었습니다.
+프로젝트에는 ESLint 10이 설치되어 있었지만 flat config 파일이 없어 검사 명령이 바로 중단됐습니다. 이 부분은 익숙하지 않아 오류 원인과 설정 예시를 AI로 확인했습니다. 그다음 프로젝트의 Vue 파일을 검사할 수 있도록 `eslint.config.js`를 추가하고 Vue 권장 규칙과 Prettier 충돌 방지 설정을 연결했습니다. 설정만 추가하고 끝내지 않고 lint와 production build를 다시 실행해 통과 여부를 확인했습니다.
 
-해결: 버튼 클릭에는 Vue 이벤트 수식어인 `.stop`을 붙여 부모 카드로 이벤트가 전달되지 않게 했습니다.
+### 모바일 화면에서 검색 영역이 좁아진 문제
 
-```vue
-<article @click="selectCity(city)">
-  <button @click.stop="toggleFavorite(city)">☆</button>
-  <button @click.stop="showDetail(city)">상세보기</button>
-</article>
-```
-
-배운 점: 카드처럼 넓은 영역을 클릭 가능하게 만들 때 내부 버튼의 동작도 함께 확인해야 했습니다. 단순히 기능이 작동하는지만 보는 것이 아니라 한 번의 클릭에 의도하지 않은 함수가 실행되지 않는지도 확인하는 습관이 필요하다고 느꼈습니다.
+데스크톱에서는 검색 입력과 결과 개수를 한 줄에 배치했지만 작은 화면에서는 입력 영역이 지나치게 좁아졌습니다. 미디어 쿼리에서 검색 영역을 세로 방향으로 바꾸고, 날씨 카드 그리드를 한 열로 줄였습니다. 390px 너비에서 가로 넘침이 없는지도 함께 확인했습니다.

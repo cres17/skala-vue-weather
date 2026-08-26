@@ -25,3 +25,4 @@ pnpm-debug.log*
 
 # Test and coverage output
 coverage/
+.eslintcache
