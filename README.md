@@ -29,6 +29,7 @@ component: () => import("../views/WeatherAboutView.vue")
 처음에는 `RouterLink`를 일반 `<a>` 태그처럼 생각했는데, 일반 링크는 페이지를 새로 요청하는 반면 `RouterLink`는 Vue Router가 현재 주소를 바꾸고 필요한 view만 교체합니다. 또 `router-link-active` 클래스를 자동으로 받을 수 있어 현재 메뉴 표시도 쉽게 처리할 수 있었습니다.
 
 상세 페이지는 `/weather/city-01`, `/weather/city-02`처럼 같은 view를 공유하면서 파라미터만 달라질 수 있습니다. 현재 구현은 `RouterView`에 `:key="$route.fullPath"`를 주어 주소가 바뀌면 view가 새로 마운트되게 했습니다. 따라서 상세 화면의 `onMounted`에서 다시 데이터를 찾는 방식과 맞춰 동작합니다.
+
 <img src="/screenshot/introduce.png" width="500" height="1000">
 
 ### 3. WeatherHomeView에서 기존 날씨 화면 연결
@@ -50,6 +51,7 @@ function showDetail(city) {
 ```
 
 여기서 `RouterLink` 대신 `router.push`를 쓴 이유는 이동 자체가 링크를 클릭하는 것이 아니라, `WeatherCard`가 `click-detail` 이벤트를 부모에게 전달한 결과이기 때문입니다. 카드 컴포넌트는 “상세보기 버튼이 눌렸다”는 사실과 도시 객체만 알리고, 실제 어디로 이동할지는 부모가 결정하게 했습니다.
+
 <img src="/screenshot/weather_detail.png" width="500" height="1000">
 
 ### 5. WeatherDetailView에서 URL 파라미터로 도시 찾기
@@ -104,7 +106,7 @@ city.value = weatherList.find(
 상세 화면에서는 `city`를 처음에 `null`로 두고, `v-if="city"`가 참일 때만 날씨 내용을 표시했습니다. 도시를 찾지 못한 경우에는 별도 안내와 목록 복귀 링크를 보여 줍니다. 404 route와 “형식은 맞지만 존재하지 않는 ID”는 다른 문제라는 것도 이 과정에서 알게 됐습니다.
 
 <img src="/screenshot/nan_weather.png" width="500" height="1000">
-weather에서 잘못 입력한 경우
+
 
 ### 동적 URL만 바뀌는데 화면이 그대로인 문제
 
