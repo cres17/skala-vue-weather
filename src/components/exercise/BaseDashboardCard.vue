@@ -1,17 +1,8 @@
 <script setup>
 defineProps({
-  as: {
-    type: String,
-    default: "section",
-  },
-  variant: {
-    type: String,
-    default: "content",
-  },
-  ariaLabel: {
-    type: String,
-    default: undefined,
-  },
+  as: { type: String, default: "section" },
+  variant: { type: String, default: "content" },
+  ariaLabel: { type: String, default: undefined },
 });
 </script>
 
@@ -22,15 +13,10 @@ defineProps({
     :class="`dashboard-card--${variant}`"
     :aria-label="ariaLabel"
   >
-    <!-- 제목과 실제 내용은 부모가 넣고, 이 컴포넌트는 공통 박스 모양만 담당한다. -->
     <header v-if="$slots.header" class="dashboard-card__header">
       <slot name="header" />
     </header>
-
-    <div class="dashboard-card__content">
-      <slot />
-    </div>
-
+    <div class="dashboard-card__content"><slot /></div>
     <footer v-if="$slots.footer" class="dashboard-card__footer">
       <slot name="footer" />
     </footer>
@@ -54,13 +40,6 @@ defineProps({
   border-radius: 24px;
 }
 
-.dashboard-card--summary {
-  border: 0;
-  border-radius: 16px;
-  color: #e8fafb;
-  background: #173b4f;
-}
-
 .dashboard-card__header {
   display: flex;
   align-items: center;
@@ -76,13 +55,7 @@ defineProps({
 }
 
 @media (max-width: 560px) {
-  .dashboard-card--content {
-    padding: 18px;
-  }
-
-  .dashboard-card__header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  .dashboard-card--content { padding: 18px; }
+  .dashboard-card__header { align-items: flex-start; flex-direction: column; }
 }
 </style>

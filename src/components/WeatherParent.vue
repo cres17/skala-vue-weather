@@ -1,97 +1,35 @@
 <script setup>
-import { computed, ref, watch, watchEffect } from "vue";
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 
-import BaseDashboardCard from "./BaseDashboardCard.vue";
-import SearchBar from "./SearchBar.vue";
-import WeatherCard from "./WeatherCard.vue";
+import BaseDashboardCard from "./exercise/BaseDashboardCard.vue";
+import SearchBar from "./exercise/SearchBar.vue";
+import WeatherCard from "./exercise/WeatherCard.vue";
+import { weatherList } from "../data/weather";
 
-// 여러 자식이 함께 사용하는 값은 부모 한 곳에서 관리한다.
+const router = useRouter();
 const searchQuery = ref("");
 const selectedCity = ref(null);
 const temperatureUnit = ref("C");
 const favoriteCityIds = ref([]);
 
-const weatherList = ref([
-  {
-    id: "city-01",
-    name: "서울",
-    temp: 28,
-    status: "맑음",
-    icon: "☀️",
-    humidity: 42,
-    wind: 2.4,
-    note: "가벼운 산책을 즐기기 좋은 날씨",
-  },
-  {
-    id: "city-02",
-    name: "수원",
-    temp: 24,
-    status: "비",
-    icon: "🌧️",
-    humidity: 76,
-    wind: 3.1,
-    note: "우산을 챙기는 것이 좋아요",
-  },
-  {
-    id: "city-03",
-    name: "부산",
-    temp: 26,
-    status: "구름",
-    icon: "⛅",
-    humidity: 61,
-    wind: 4.2,
-    note: "해안가에서는 바람이 조금 강해요",
-  },
-  {
-    id: "city-04",
-    name: "제주",
-    temp: 27,
-    status: "맑음",
-    icon: "🌤️",
-    humidity: 58,
-    wind: 5.7,
-    note: "자외선 차단제를 준비하세요",
-  },
-  {
-    id: "city-05",
-    name: "대전",
-    temp: 22,
-    status: "흐림",
-    icon: "☁️",
-    humidity: 68,
-    wind: 1.8,
-    note: "선선한 하루가 이어집니다",
-  },
-  {
-    id: "city-06",
-    name: "광주",
-    temp: 29,
-    status: "맑음",
-    icon: "☀️",
-    humidity: 39,
-    wind: 2.1,
-    note: "낮 동안 더위를 조심하세요",
-  },
-]);
-
-// 앞뒤 공백만 입력했을 때는 전체 목록이 보이도록 검색어를 먼저 정리한다.
 const normalizedSearchQuery = computed(() =>
   searchQuery.value.trim().toLowerCase(),
 );
 
 const filteredWeatherList = computed(() => {
-  if (!normalizedSearchQuery.value) return weatherList.value;
-  return weatherList.value.filter((city) =>
+  if (!normalizedSearchQuery.value) return weatherList;
+  return weatherList.filter((city) =>
     city.name.toLowerCase().includes(normalizedSearchQuery.value),
   );
 });
 
 const favoriteCities = computed(() =>
-  weatherList.value.filter((city) => favoriteCityIds.value.includes(city.id)),
+  weatherList.filter((city) => favoriteCityIds.value.includes(city.id)),
 );
 
 const weatherSummary = computed(() => {
-  const hottestCity = weatherList.value.reduce((hottest, city) =>
+  const hottestCity = weatherList.reduce((hottest, city) =>
     city.temp > hottest.temp ? city : hottest,
   );
   return `오늘 가장 따뜻한 도시는 ${hottestCity.name}(${formatTemperature(hottestCity.temp)})입니다.`;
@@ -104,23 +42,6 @@ const selectedCityInfo = computed(() => {
   return `${selectedCity.value.name}이 선택되었습니다. 현재 ${selectedCity.value.status}, ${formatTemperature(selectedCity.value.temp)}입니다.`;
 });
 
-watch(selectedCityInfo, (newMessage, oldMessage) => {
-  console.log("[watch] 상태바 문구 변경:", {
-    이전: oldMessage,
-    현재: newMessage,
-  });
-});
-
-watchEffect(() => {
-  console.log(`[watchEffect] 현재 검색어: "${searchQuery.value}"`);
-});
-
-watch(temperatureUnit, (newUnit) => {
-  console.log(
-    `[watch] 온도 표시 단위가 ${newUnit === "C" ? "섭씨" : "화씨"}로 변경되었습니다.`,
-  );
-});
-
 function formatTemperature(celsius) {
   return temperatureUnit.value === "C"
     ? `${celsius}°C`
@@ -128,7 +49,6 @@ function formatTemperature(celsius) {
 }
 
 function updateSearchQuery(query) {
-  // SearchBar는 값을 직접 바꾸지 않고 이 함수를 통해 변경을 요청한다.
   searchQuery.value = query;
 }
 
@@ -137,9 +57,7 @@ function selectCity(city) {
 }
 
 function showDetail(city) {
-  window.alert(
-    `${city.name}의 현재 날씨는 [${city.status}] 상태이며, 기온은 ${formatTemperature(city.temp)}입니다.\n${city.note}`,
-  );
+  router.push(`/weather/${city.id}`);
 }
 
 function toggleFavorite(city) {
