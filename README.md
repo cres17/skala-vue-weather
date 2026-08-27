@@ -12,9 +12,9 @@ npm run lint
 
 `lint` 명령은 ESLint와 Oxlint를 실행하며, 자동 수정 가능한 항목도 함께 정리합니다.
 
-<img src="./screenshot/ESLint_1.png" width="700" alt="ESLint 점검 결과 1">
+<img src="./screenshot/ESLint_1.png" width="400" alt="ESLint 점검 결과 1">
 
-<img src="./screenshot/ESLint_2.png" width="700" alt="ESLint 점검 결과 2">
+<img src="./screenshot/ESLint_2.png" width="400" alt="ESLint 점검 결과 2">
 
 ### 2. API 키 환경 변수 관리
 
@@ -37,8 +37,6 @@ npm run build
 
 빌드가 완료되면 `dist/` 폴더에 정적 파일이 생성됩니다.
 
-<img src="./screenshot/Github_pages_build_1.png" width="700" alt="배포 스크린샷">
-
 ### 2. GitHub Pages 배포 및 확인
 
 GitHub Pages는 정적 파일을 호스팅하는 서비스입니다. GitHub Actions가 `main` 또는 `8-weather-deployment` 브랜치에 푸시될 때마다 프로젝트를 빌드하고 `dist/` 폴더를 GitHub Pages에 배포합니다.
@@ -54,6 +52,9 @@ GitHub Pages는 정적 파일을 호스팅하는 서비스입니다. GitHub Acti
    ```
 
 4. GitHub 저장소의 **Actions** 탭에서 배포 workflow가 성공한 것을 확인합니다.
+
+<img src="./screenshot/Github_pages_build_1.png" width="700" alt="배포 스크린샷">
+   
 5. 배포 주소에서 서비스가 정상적으로 열리는지 확인합니다.
 
    `https://cres17.github.io/skala-vue-weather/`
