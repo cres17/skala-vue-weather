@@ -7,7 +7,7 @@ Vue 3로 만든 지역별 날씨 앱입니다. 이전 단계에서 만든 컴포
 
 <img src="/screenshot/Fahrenheit.png" width="500" alt="화씨로 표시된 날씨 목록 화면">
 
-## 구현 내용
+## 요구사항별 구현 내용
 
 ### Axios로 OpenWeather API 호출
 
