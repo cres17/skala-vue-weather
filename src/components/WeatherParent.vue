@@ -1,35 +1,40 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import BaseDashboardCard from "./exercise/BaseDashboardCard.vue";
 import SearchBar from "./exercise/SearchBar.vue";
 import WeatherCard from "./exercise/WeatherCard.vue";
-import { weatherList } from "../data/weather";
+import { getWeatherList, searchCities } from "../services/weather";
+import { useConfigStore } from "../stores/configStore";
+import { useFavoriteStore } from "../stores/favoriteStore";
 
 const router = useRouter();
+const configStore = useConfigStore();
+const favoriteStore = useFavoriteStore();
 const searchQuery = ref("");
 const selectedCity = ref(null);
-const temperatureUnit = ref("C");
-const favoriteCityIds = ref([]);
+const weatherList = ref([]);
+const isLoading = ref(true);
+const errorMessage = ref("");
 
-const normalizedSearchQuery = computed(() =>
-  searchQuery.value.trim().toLowerCase(),
-);
+async function updateSearchQuery(query) {
+  searchQuery.value = query;
 
-const filteredWeatherList = computed(() => {
-  if (!normalizedSearchQuery.value) return weatherList;
-  return weatherList.filter((city) =>
-    city.name.toLowerCase().includes(normalizedSearchQuery.value),
-  );
-});
+  if (!query.trim()) {
+    weatherList.value = await getWeatherList();
+    return;
+  }
 
-const favoriteCities = computed(() =>
-  weatherList.filter((city) => favoriteCityIds.value.includes(city.id)),
-);
+  weatherList.value = await searchCities(query.trim());
+}
 
 const weatherSummary = computed(() => {
-  const hottestCity = weatherList.reduce((hottest, city) =>
+  if (!weatherList.value.length) {
+    return "날씨 정보를 불러오는 중입니다.";
+  }
+
+  const hottestCity = weatherList.value.reduce((hottest, city) =>
     city.temp > hottest.temp ? city : hottest,
   );
   return `오늘 가장 따뜻한 도시는 ${hottestCity.name}(${formatTemperature(hottestCity.temp)})입니다.`;
@@ -43,13 +48,11 @@ const selectedCityInfo = computed(() => {
 });
 
 function formatTemperature(celsius) {
-  return temperatureUnit.value === "C"
-    ? `${celsius}°C`
-    : `${Math.round((celsius * 9) / 5 + 32)}°F`;
-}
-
-function updateSearchQuery(query) {
-  searchQuery.value = query;
+  const temperature =
+    configStore.unit === "celsius"
+      ? celsius
+      : Math.round((celsius * 9) / 5 + 32);
+  return `${temperature}${configStore.unitSymbol}`;
 }
 
 function selectCity(city) {
@@ -57,21 +60,39 @@ function selectCity(city) {
 }
 
 function showDetail(city) {
-  router.push(`/weather/${city.id}`);
+  router.push({
+    name : "weather-detail",
+    params : {cityId: city.id},
+    query: {
+      name : city.name,
+      lat : city.lat,
+      lon : city.lon,
+    },
+  });
 }
 
 function toggleFavorite(city) {
-  const index = favoriteCityIds.value.indexOf(city.id);
-  if (index >= 0) {
-    favoriteCityIds.value.splice(index, 1);
-    return;
-  }
-  favoriteCityIds.value.push(city.id);
+  favoriteStore.toggleFavorite(city.id);
 }
 
 function isFavorite(city) {
-  return favoriteCityIds.value.includes(city.id);
+  return favoriteStore.isFavorite(city.id);
 }
+
+async function loadWeather() {
+  isLoading.value = true;
+  errorMessage.value = "";
+
+  try {
+    weatherList.value = await getWeatherList();
+  } catch (error) {
+    errorMessage.value = error.message;
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(loadWeather);
 </script>
 
 <template>
@@ -83,29 +104,13 @@ function isFavorite(city) {
           <h1>오늘의 지역별 날씨</h1>
           <p>도시를 검색하고, 카드를 선택해 현재 날씨를 확인하세요.</p>
         </div>
-        <div class="unit-switch" aria-label="온도 단위 선택">
-          <button
-            type="button"
-            :class="{ active: temperatureUnit === 'C' }"
-            @click="temperatureUnit = 'C'"
-          >
-            °C
-          </button>
-          <button
-            type="button"
-            :class="{ active: temperatureUnit === 'F' }"
-            @click="temperatureUnit = 'F'"
-          >
-            °F
-          </button>
-        </div>
       </div>
     </section>
 
     <BaseDashboardCard variant="search" aria-label="도시 날씨 검색">
       <SearchBar
         :query="searchQuery"
-        :result-count="filteredWeatherList.length"
+        :result-count="weatherList.length"
         :total-count="weatherList.length"
         @update-query="updateSearchQuery"
       />
@@ -118,7 +123,7 @@ function isFavorite(city) {
     <div class="summary-card">
       <span aria-hidden="true">✦</span>
       <p>{{ weatherSummary }}</p>
-      <small>즐겨찾기 {{ favoriteCities.length }}개</small>
+      <small>즐겨찾기 {{ favoriteStore.favoriteCount }}개</small>
     </div>
 
     <BaseDashboardCard variant="content" aria-label="지역별 날씨 목록">
@@ -128,13 +133,22 @@ function isFavorite(city) {
           <h2>지역별 날씨 현황</h2>
         </div>
         <span class="list-heading__count"
-          >{{ filteredWeatherList.length }}개 도시</span
+          >{{ weatherList.length }}개 도시</span
         >
       </template>
 
-      <div v-if="filteredWeatherList.length" class="weather-grid">
+      <div v-if="isLoading" class="weather-message" role="status">
+        현재 날씨 정보를 불러오는 중입니다.
+      </div>
+
+      <section v-else-if="errorMessage" class="weather-message weather-message--error" role="alert">
+        <p>{{ errorMessage }}</p>
+        <button type="button" @click="loadWeather">다시 시도</button>
+      </section>
+
+      <div v-else-if="weatherList.length" class="weather-grid">
         <WeatherCard
-          v-for="city in filteredWeatherList"
+          v-for="city in weatherList"
           :key="city.id"
           :city="city"
           :temperature="formatTemperature(city.temp)"
@@ -203,28 +217,6 @@ function isFavorite(city) {
 .hero__heading p {
   margin: 12px 0 0;
   color: #6c818d;
-}
-
-.unit-switch {
-  display: flex;
-  padding: 4px;
-  border-radius: 12px;
-  background: #e4edf1;
-}
-
-.unit-switch button {
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 8px;
-  color: #6c818d;
-  background: transparent;
-  font-weight: 700;
-}
-
-.unit-switch button.active {
-  color: #197d91;
-  background: #fff;
-  box-shadow: 0 2px 7px rgb(71 103 121 / 11%);
 }
 
 .status-bar {
@@ -299,6 +291,29 @@ function isFavorite(city) {
   border: 1px dashed #bfd6dc;
   border-radius: 18px;
   text-align: center;
+}
+
+.weather-message {
+  padding: 48px 20px;
+  color: #66808b;
+  text-align: center;
+}
+
+.weather-message--error {
+  color: #b64646;
+}
+
+.weather-message p {
+  margin: 0 0 14px;
+}
+
+.weather-message button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #247c8d;
+  font-weight: 700;
 }
 
 .empty-state > span {

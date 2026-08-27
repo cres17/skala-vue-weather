@@ -1,19 +1,81 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { weatherList } from "../data/weather";
+import { getCityById, getWeatherForCity } from "../services/weather";
+import { useConfigStore } from "../stores/configStore";
 
 const route = useRoute();
+const configStore = useConfigStore();
 const city = ref(null);
+const isLoading = ref(true);
+const errorMessage = ref("");
 
-onMounted(() => {
-  city.value = weatherList.find((weather) => weather.id === route.params.cityId);
+const formattedTemperature = computed(() => {
+  if (!city.value) return "";
+  const temperature =
+    configStore.unit === "celsius"
+      ? city.value.temp
+      : Math.round((city.value.temp * 9) / 5 + 32);
+  return `${temperature}${configStore.unitSymbol}`;
 });
+
+function getRouteCity() {
+  const defaultCity = getCityById(route.params.cityId);
+
+  if (defaultCity) return defaultCity;
+
+  const { name, lat, lon} = route.query;
+  const latitude = Number(lat);
+  const longitude = Number(lon);
+
+  if (
+    typeof name !== "string" ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
+    return null;
+  }
+  return {
+    id : route.params.cityId,
+    name,
+    lat : latitude,
+    lon : longitude,
+  };
+}
+
+async function loadWeather() {
+  const cityConfig = getRouteCity();
+
+  if (!cityConfig) {
+    city.value = null;
+    errorMessage.value = "요청한 도시를 찾지 못했습니다.";
+    isLoading.value = false;
+    return;
+  }
+
+  isLoading.value = true;
+  errorMessage.value = "";
+
+  try {
+    city.value = await getWeatherForCity(cityConfig);
+  } catch (error) {
+    city.value = null;
+    errorMessage.value = error.message;
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+watch(() => route.params.cityId, loadWeather, { immediate: true });
 </script>
 
 <template>
   <main class="detail-page">
-    <section v-if="city" class="detail-card">
+    <section v-if="isLoading" class="detail-card detail-card--empty" role="status">
+      <p>현재 날씨 정보를 불러오는 중입니다.</p>
+    </section>
+
+    <section v-else-if="city" class="detail-card">
       <RouterLink class="detail-card__back" to="/weather">← 지역별 날씨</RouterLink>
       <div class="detail-card__heading">
         <div>
@@ -24,7 +86,7 @@ onMounted(() => {
         <span class="detail-card__icon" aria-hidden="true">{{ city.icon }}</span>
       </div>
 
-      <div class="detail-card__temperature">{{ city.temp }}°C</div>
+      <div class="detail-card__temperature">{{ formattedTemperature }}</div>
       <p class="detail-card__note">{{ city.note }}</p>
 
       <dl class="detail-card__metrics">
@@ -44,7 +106,7 @@ onMounted(() => {
     </section>
 
     <section v-else class="detail-card detail-card--empty">
-      <p>요청한 도시의 날씨 정보를 찾지 못했습니다.</p>
+      <p>{{ errorMessage }}</p>
       <RouterLink to="/weather">날씨 목록으로 돌아가기</RouterLink>
     </section>
   </main>
