@@ -33,10 +33,13 @@ function getWeatherNote(conditionId) {
   return "현재 날씨 정보를 확인해 보세요.";
 }
 
-function isCompleteForecast(data) {
-  return Boolean(
-    Array.isArray(data?.midRange?.days) && data.midRange.days.length === 7,
-  );
+function isValidForecast(data) {
+  const days = data?.midRange?.days;
+  if (!Array.isArray(days) || days.length < 1 || days.length > 7) return false;
+
+  const dates = days.map((day) => day?.date);
+  return dates.every((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+    && new Set(dates).size === dates.length;
 }
 
 function toWeatherCity(city, weather) {
@@ -122,7 +125,7 @@ export async function getForecastForCity(city) {
       },
     });
 
-    if (!isCompleteForecast(data)) throw new Error("일기예보 응답 형식이 올바르지 않습니다.");
+    if (!isValidForecast(data)) throw new Error("일기예보 응답 형식이 올바르지 않습니다.");
     return data;
   } catch (error) {
     throw toWeatherError(error);

@@ -637,8 +637,16 @@ def get_kma_mid_forecast(latitude, longitude):
         forecast.update(temperatures.get(date, {}))
         days.append(forecast)
 
-    if len(days) != 7:
-        raise ValueError("기상청 중기예보의 4~10일 자료가 충분하지 않습니다.")
+    today = datetime.now(KST).date()
+    forecast_start = today + timedelta(days=4)
+    forecast_end = today + timedelta(days=10)
+    days = [
+        day for day in days
+        if forecast_start <= datetime.strptime(day["date"], "%Y-%m-%d").date() <= forecast_end
+    ]
+
+    if not days:
+        raise ValueError("기상청 중기예보의 4~10일 자료가 없습니다.")
     return days
 
 
