@@ -75,6 +75,16 @@ function getUtciTone(thermal){
   return "is-hot";
 }
 
+function getAirTone(air) {
+  if (!air?.available) return "is-unavailable";
+  return {
+    1: "is-sky",
+    2: "is-sky-light",
+    3: "is-yellow",
+    4: "is-orange",
+  }[air.grade] || "is-sky-light";
+}
+
 function getDecisionIcon(type) {
   return {
     heat: "🌡️",
@@ -203,6 +213,28 @@ watch(() => route.params.cityId, loadWeather, { immediate: true });
           </div>
         </article>
 
+        <article class="index-card index-card--air" :class="getAirTone(outdoorAssessment?.air)">
+          <template v-if="outdoorAssessment?.air?.available">
+            <p class="index-card__eyebrow">대기질 · AIRKOREA</p>
+            <strong>{{ outdoorAssessment.air.label }}</strong>
+            <span class="index-card__status">통합대기환경지수 {{ outdoorAssessment.air.khaiValue ?? "—" }}</span>
+            <p>{{ outdoorAssessment.air.stationName }} 측정소 · {{ outdoorAssessment.air.observedAt }}</p>
+            <dl class="index-card__inputs">
+              <div><dt>미세먼지</dt><dd>{{ outdoorAssessment.air.pm10 ?? "—" }} ㎍/㎥</dd></div>
+              <div><dt>초미세먼지</dt><dd>{{ outdoorAssessment.air.pm25 ?? "—" }} ㎍/㎥</dd></div>
+            </dl>
+          </template>
+          <div v-else class="index-card__unavailable" role="status">
+            <span class="index-card__unavailable-icon" aria-hidden="true">—</span>
+            <div>
+              <p class="index-card__unavailable-kicker">대기질 관측 상태</p>
+              <strong>대기질 정보가 없습니다.</strong>
+              <p>{{ outdoorAssessment?.air?.message || "대기질 정보를 불러오는 중입니다." }}</p>
+              <small>대기환경정보 API 연결 후 자동으로 표시됩니다.</small>
+            </div>
+          </div>
+        </article>
+
       </section>
 
       <section class="detail-card__forecast" aria-label="일기 예보">
@@ -262,7 +294,7 @@ watch(() => route.params.cityId, loadWeather, { immediate: true });
         </ul>
         <p v-else class="outdoor-decision-panel__clear">✓ 현재 확인 가능한 지표에서 강한 주의 요인이 없습니다.</p>
 
-        <p class="outdoor-decision-panel__source">기상청 관측 UTCI·일사량·풍속·강수량 기준</p>
+        <p class="outdoor-decision-panel__source">기상청 관측 UTCI·일사량·풍속·강수량과 AirKorea 대기질 기준</p>
       </template>
       <div v-else-if="isOutdoorAssessmentLoading" class="outdoor-decision-panel__loading">
         <span aria-hidden="true">⌁</span>
@@ -374,8 +406,8 @@ h1 {
 
 .detail-card__indices {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 620px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 920px;
   gap: 22px;
   margin-top: 42px;
 }

@@ -5,7 +5,7 @@ const outdoorApi = axios.create({
   timeout: 8_000,
 });
 
-function createDecisionFallback(thermal) {
+function createDecisionFallback(thermal, air) {
   const reasons = [];
   const inputs = thermal?.inputs || {};
 
@@ -22,10 +22,19 @@ function createDecisionFallback(thermal) {
 
     if (inputs.solarRadiation >= 2) reasons.push({ type: "radiation", severity: "danger", title: "복사열이 강해요", detail: "기상청 일사량 기준으로 체감 온도가 크게 올라갈 수 있어요." });
     if (inputs.windSpeed >= 10) reasons.push({ type: "wind", severity: "caution", title: "바람이 매우 많이 불어요", detail: `평균 풍속 ${inputs.windSpeed} m/s입니다.` });
-    if (inputs.rainfall >= 1) reasons.push({ type: "rain", severity: "caution", title: "비가 내리고 있어요", detail: `최근 관측 강수량은 ${inputs.rainfall} mm입니다.` });
+    if (inputs.rainfall > 0) reasons.push({ type: "rain", severity: "caution", title: "비가 내리고 있어요", detail: `최근 관측 강수량은 ${inputs.rainfall} mm입니다.` });
   }
 
+  if (air?.available && air.grade >= 4) reasons.push({ type: "air", severity: "danger", title: "대기질이 매우 나빠요", detail: `${air.stationName} 측정소 기준 매우 나쁨입니다.` });
+  else if (air?.available && air.grade >= 3) reasons.push({ type: "air", severity: "caution", title: "대기질이 나빠요", detail: `${air.stationName} 측정소 기준 나쁨입니다.` });
+
   if (!thermal?.available) {
+    if (reasons.some((reason) => reason.severity === "danger")) {
+      return { available: true, verdict: "avoid", title: "대기질 때문에 외출을 미루는 편이 좋아요", summary: "UTCI는 확인하지 못했지만, 대기질에서 강한 주의 요인이 확인됐습니다.", reasons };
+    }
+    if (reasons.length) {
+      return { available: true, verdict: "caution", title: "대기질을 확인하고 외출해 주세요", summary: "UTCI는 확인하지 못했지만, 대기질에 주의가 필요합니다.", reasons };
+    }
     return {
       available: false,
       verdict: "unknown",
@@ -73,6 +82,6 @@ export async function getOutdoorAssessment(city) {
     ...data,
     decision: hasDecisionShape(data.decision)
       ? data.decision
-      : createDecisionFallback(data.thermal),
+      : createDecisionFallback(data.thermal, data.air),
   };
 }

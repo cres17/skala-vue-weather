@@ -42,6 +42,7 @@ UTCI_MAX_OBSERVATION_AGE = timedelta(hours=1)
 KMA_MID_REGION_URL = "https://apihub.kma.go.kr/api/typ01/url/fct_medm_reg.php"
 KMA_MID_LAND_FORECAST_URL = "https://apihub.kma.go.kr/api/typ01/url/fct_afs_wl.php"
 KMA_MID_TEMPERATURE_FORECAST_URL = "https://apihub.kma.go.kr/api/typ01/url/fct_afs_wc.php"
+AIR_KOREA_REALTIME_URL = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty"
 KMA_MID_REGIONS = [
     (37.57, 127.00, "11B00000"),  # 서울·인천·경기
     (37.80, 127.80, "11D10000"),  # 강원 영서
@@ -75,6 +76,13 @@ KMA_STATION_POINTS = [
     (36.35, 127.38, 133), (35.81, 127.12, 146), (35.16, 126.85, 156),
     (35.87, 128.60, 143), (35.55, 129.31, 152), (35.18, 129.08, 159),
     (33.50, 126.53, 184),
+]
+AIR_KOREA_STATIONS = [
+    (37.57, 126.98, "중구"), (37.46, 126.71, "부평"), (37.30, 127.01, "수원"),
+    (37.88, 127.73, "석사동"), (37.75, 128.88, "옥천동"), (36.58, 127.51, "복대동"),
+    (36.35, 127.38, "구성동"), (35.81, 127.12, "노송동"), (35.16, 126.85, "서석동"),
+    (35.87, 128.60, "수창동"), (35.55, 129.31, "신정동"), (35.18, 129.08, "연산동"),
+    (33.50, 126.53, "연동"),
 ]
 KOREAN_LOCATION_CATALOG = [
     {"name": "서울", "lat": 37.5665, "lon": 126.978},
@@ -177,6 +185,69 @@ def request_kma_text(url, params):
             return response.read().decode("euc-kr", errors="replace")
     except urllib.error.HTTPError as error:
         raise ValueError(f"기상청 예보 정보를 불러오지 못했습니다. ({error.code})") from error
+
+
+def get_nearest_air_korea_station(latitude, longitude):
+    return min(
+        AIR_KOREA_STATIONS,
+        key=lambda station: (latitude - station[0]) ** 2 + (longitude - station[1]) ** 2,
+    )[2]
+
+
+def air_quality_grade(value):
+    try:
+        grade = int(value)
+    except (TypeError, ValueError):
+        return None
+    return grade if 1 <= grade <= 4 else None
+
+
+def build_air_index(latitude, longitude):
+    api_key = os.getenv("AIR_KOREA_API_KEY")
+    if not api_key:
+        return {
+            "available": False,
+            "message": "대기질 인증키가 설정되지 않았습니다. AIR_KOREA_API_KEY를 등록해 주세요.",
+        }
+
+    station_name = get_nearest_air_korea_station(latitude, longitude)
+    try:
+        payload = request_json(
+            AIR_KOREA_REALTIME_URL,
+            {
+                "serviceKey": api_key,
+                "returnType": "json",
+                "numOfRows": 1,
+                "pageNo": 1,
+                "stationName": station_name,
+                "dataTerm": "DAILY",
+                "ver": "1.4",
+            },
+        )
+    except ValueError as error:
+        return {"available": False, "message": f"대기질 정보를 불러오지 못했습니다. ({error})"}
+
+    items = payload.get("response", {}).get("body", {}).get("items", [])
+    if not items:
+        return {"available": False, "message": "해당 측정소의 대기질 관측값이 없습니다."}
+
+    item = items[0]
+    grades = [air_quality_grade(item.get(key)) for key in ("khaiGrade", "pm10Grade", "pm25Grade")]
+    grade = max((value for value in grades if value is not None), default=None)
+    if grade is None:
+        return {"available": False, "message": "대기질 등급을 확인할 수 없습니다."}
+
+    labels = {1: "좋음", 2: "보통", 3: "나쁨", 4: "매우 나쁨"}
+    return {
+        "available": True,
+        "stationName": station_name,
+        "observedAt": item.get("dataTime"),
+        "grade": grade,
+        "label": labels[grade],
+        "pm10": item.get("pm10Value"),
+        "pm25": item.get("pm25Value"),
+        "khaiValue": item.get("khaiValue"),
+    }
 
 
 def parse_kma_observed_at(value):
@@ -282,7 +353,7 @@ def build_thermal_index(city_id, latitude, longitude):
     }
 
 
-def build_outdoor_decision(thermal):
+def build_outdoor_decision(thermal, air):
     reasons = []
 
     if thermal.get("available"):
@@ -336,7 +407,7 @@ def build_outdoor_decision(thermal):
             })
 
         rainfall = inputs.get("rainfall")
-        if rainfall is not None and rainfall >= 1:
+        if rainfall is not None and rainfall > 0:
             reasons.append({
                 "type": "rain",
                 "severity": "caution",
@@ -344,8 +415,40 @@ def build_outdoor_decision(thermal):
                 "detail": f"최근 관측 강수량은 {rainfall} mm입니다. 미끄럼과 우산을 확인해 주세요.",
             })
 
+    if air.get("available"):
+        if air["grade"] >= 4:
+            reasons.append({
+                "type": "air",
+                "severity": "danger",
+                "title": "대기질이 매우 나빠요",
+                "detail": f"{air['stationName']} 측정소 기준 {air['label']}입니다. 야외 활동을 미루는 편이 좋아요.",
+            })
+        elif air["grade"] >= 3:
+            reasons.append({
+                "type": "air",
+                "severity": "caution",
+                "title": "대기질이 나빠요",
+                "detail": f"{air['stationName']} 측정소 기준 {air['label']}입니다. 마스크를 준비하고 활동 시간을 줄여 주세요.",
+            })
+
     has_thermal = thermal.get("available")
     if not has_thermal:
+        if any(reason["severity"] == "danger" for reason in reasons):
+            return {
+                "available": True,
+                "verdict": "avoid",
+                "title": "대기질 때문에 외출을 미루는 편이 좋아요",
+                "summary": "UTCI는 확인하지 못했지만, 대기질에서 강한 주의 요인이 확인됐습니다.",
+                "reasons": reasons,
+            }
+        if reasons:
+            return {
+                "available": True,
+                "verdict": "caution",
+                "title": "대기질을 확인하고 외출해 주세요",
+                "summary": "UTCI는 확인하지 못했지만, 대기질에 주의가 필요합니다.",
+                "reasons": reasons,
+            }
         return {
             "available": False,
             "verdict": "unknown",
@@ -583,7 +686,8 @@ class ApiHandler(BaseHTTPRequestHandler):
                     thermal = build_thermal_index(city_id, latitude, longitude)
                 except Exception as error:
                     thermal = {"available": False, "message": f"UTCI 정보가 없습니다. ({error})"}
-                self.send_json(200, {"thermal": thermal, "decision": build_outdoor_decision(thermal)})
+                air = build_air_index(latitude, longitude)
+                self.send_json(200, {"thermal": thermal, "air": air, "decision": build_outdoor_decision(thermal, air)})
                 return
             self.send_json(404, {"message": "요청한 API를 찾지 못했습니다."})
         except (KeyError, ValueError) as error:

@@ -1,4 +1,4 @@
-from server.app import build_outdoor_decision, build_thermal_index
+from server.app import build_air_index, build_outdoor_decision, build_thermal_index
 from server.vercel_handler import BaseApiHandler
 
 
@@ -13,7 +13,8 @@ class handler(BaseApiHandler):
                 thermal = build_thermal_index(city_id, latitude, longitude)
             except Exception as error:
                 thermal = {"available": False, "message": f"UTCI 정보가 없습니다. ({error})"}
-            self.send_json(200, {"thermal": thermal, "decision": build_outdoor_decision(thermal)})
+            air = build_air_index(latitude, longitude)
+            self.send_json(200, {"thermal": thermal, "air": air, "decision": build_outdoor_decision(thermal, air)})
         except (KeyError, ValueError) as error:
             self.send_bad_request(error)
         except Exception:
