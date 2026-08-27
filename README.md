@@ -91,9 +91,9 @@ return `${temperature}${configStore.unitSymbol}`;
 
 ## AI를 사용한 부분
 
-- Pinia의 state, getters, actions를 이 요구사항에 맞게 나누는 방식을 확인했습니다.
-- 화씨 변환식과 반올림 위치를 점검했습니다.
-- 구현 뒤 lint와 production build로 문법 및 번들 오류가 없는지 확인했습니다.
+- Pinia의 state, getters, actions를 이 요구사항에 맞게 나누는 방식을 확인하는데 도움을 받았습니다.
+- 화씨 변환식과 반올림 위치를 점검하는데 도움을 받았습니다.
+- 구현 뒤 lint와 production build로 문법 및 번들 오류가 없는지 확인하는데 도움을 받았습니다.
 
 ## 트러블 슈팅
 
