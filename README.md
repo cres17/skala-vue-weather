@@ -4,29 +4,12 @@
 지도에서 시·군·구를 선택하거나 도시를 검색하면, 가까운 기상청 관측소의 현재 관측값과
 기상청 중기예보를 확인할 수 있습니다.
 
-> 배포 시 기상청 인증키는 Vercel 환경변수에만 등록합니다. 저장소나 클라이언트 코드에는 포함하지 않습니다.
-
-## 프로젝트 흐름
-
-이 프로젝트는 `skala-vue-weather`의 학습 브랜치를 이어서 확장했습니다.
-
-| 브랜치 | 학습·구현 내용 |
-| --- | --- |
-| 1-weather-mockup | Vue 디렉티브, 이벤트, 정적 날씨 카드 |
-| 2-weather-composition | Composition API, `computed`, `watch` |
-| 3-weather-component | props/emits, slot, 컴포넌트 분리 |
-| 4-weather-router | Vue Router, 동적 상세 경로, 404 |
-| 5-weather-store | Pinia로 온도 단위·즐겨찾기 공유 |
-| 6-weather-axios | Axios 기반 실시간 날씨 요청·오류 처리 |
-| 7-weather-ui-library | OpenWeather와 기상청 관측 상세 정보 결합 |
-| **9-weather-final (현재)** | **기상청 단일 데이터 구조, 지도, 중기예보, UTCI 외출 판단, Vercel 배포 구조** |
-
 ## 7번 브랜치 대비 추가·변경한 기능
 
 ### 1. 기상청 단일 데이터 소스
 
 7번 브랜치에서는 OpenWeather 현재 날씨와 기상청 관측 정보를 함께 사용했습니다.
-현재 버전은 제공자마다 값과 갱신 시점이 달라지는 문제를 줄이기 위해 **현재 날씨, 예보, 외출 판단의 입력값을 모두 기상청 데이터로 통일**했습니다.
+현재 날씨와 예보는 기상청 데이터로 통일하고, 대기질은 국가 대기환경정보를 제공하는 AirKorea 관측값으로 표시합니다.
 
 - 가까운 기상청 지상관측소를 좌표 기준으로 선택해 현재 기온·습도·풍속·강수를 표시합니다.
 - 예보구역 API로 지역 코드를 검증한 후, 중기 육상예보와 중기 기온예보를 함께 요청합니다.
@@ -53,6 +36,8 @@ Leaflet 지도에 국내 행정구역 레이어를 올리고, 시·도와 시·�
 상세 페이지에는 현재 기상청 관측값, UTCI 체감온도, 외출 판단, 가로 스크롤 중기예보를 배치했습니다.
 
 - UTCI는 기온·습도·풍속 입력값으로 서버에서 계산합니다.
+- 대기질은 AirKorea의 PM10·PM2.5·통합대기환경지수로 표시합니다.
+- 외출 판단은 UTCI, 대기질, 실제 관측 강수를 함께 반영합니다.
 - 더위·추위 상태에 따라 외출 판단 카드의 강조색과 안내 문구를 바꿉니다.
 - 예보 안내 문구는 `좌우로 스크롤하세요`로 통일했고, 스크롤 버튼과 분리해 겹치지 않게 했습니다.
 - 긴 오전·오후 예보 문구는 말줄임표 대신 줄바꿈으로 보여 줍니다.
@@ -63,54 +48,6 @@ Leaflet 지도에 국내 행정구역 레이어를 올리고, 시·도와 시·�
 
 Vercel 배포를 위해 Python Serverless Function과 SPA rewrite를 추가했습니다. 따라서 `/map`, `/weather/seoul`처럼 직접 주소로 진입해도 Vue Router 화면을 열 수 있습니다.
 
-## 기술 구성
-
-- Vue 3, Vue Router, Pinia
-- Axios
-- Leaflet, TopoJSON
-- Python Vercel Functions
-- 기상청 API 허브: 지상관측, 중기 예보구역, 중기 육상·기온예보
-
-## API 경로
-
-| 경로 | 역할 |
-| --- | --- |
-| `/api/weather` | 선택 좌표와 가장 가까운 기상청 관측소의 현재 관측값 |
-| `/api/geocoding` | 앱에 등록한 국내 주요 도시 검색 |
-| `/api/forecast` | 기상청 중기 육상·기온예보를 결합한 +4~+10일 예보 |
-| `/api/outdoor-assessment` | 기상청 관측값 기반 UTCI 및 외출 판단 |
-
-## 로컬 실행
-
-```bash
-npm install
-python3 -m pip install -r requirements.txt
-cp .env.example .env
-```
-
-`.env`에 기상청에서 발급받은 인증키를 설정합니다.
-
-```bash
-KMA_API_KEY=발급받은_기상청_인증키
-```
-
-```bash
-npm run dev
-```
-
-검사는 다음 명령으로 실행할 수 있습니다.
-
-```bash
-npm run lint
-npm run build
-```
-
-## Vercel 배포
-
-1. GitHub 저장소를 Vercel에서 Import합니다.
-2. Build Command에 `npm run build`, Output Directory에 `dist`를 설정합니다.
-3. Environment Variables에 `KMA_API_KEY`를 등록합니다.
-4. 배포 뒤 `/map`과 `/weather/seoul`을 새로고침해 API와 직접 진입을 확인합니다.
 
 ## 트러블 슈팅
 
@@ -128,17 +65,9 @@ npm run build
 
 중기예보의 오전·오후 문구가 한 줄로 유지되면서 카드 높이와 버튼 영역이 충돌했습니다. 날씨 설명에 줄바꿈을 보존하는 CSS를 적용하고, 스크롤 안내·이동 버튼을 예보 카드 영역과 분리했습니다. 지도에서는 세로, 상세 페이지에서는 가로 흐름을 유지했습니다.
 
-### 배포 환경에서 API 키를 노출하면 안 되는 문제
-
-Vite 환경변수는 클라이언트 번들에 포함될 수 있으므로, 기상청 인증키를 `VITE_*` 변수에 두지 않았습니다. Python API에서 서버 환경변수 `KMA_API_KEY`만 읽도록 하고, Vercel에도 같은 이름으로 등록하도록 구성했습니다.
-
 ## AI 사용 범위
 
-AI의 도움을 받은 부분을 숨기지 않고 기록합니다.
-
 - 기상청 API 문서의 필드와 예보구역·육상·기온예보의 역할을 정리하는 데 도움을 받았습니다.
-- API 응답을 날짜별 카드 데이터로 합치는 구조, UTCI 계산 흐름, 오류 문구를 검토했습니다.
+- API 응답을 날짜별 카드 데이터로 합치는 구조, UTCI 계산 흐름, 오류 문구를 검토할 때 도움을 받았습니다.
 - 예보 타임라인의 줄바꿈·스크롤·반응형 CSS 초안과 README 문서 구조를 만드는 데 도움을 받았습니다.
-- 브랜치별 기능을 비교하고, production build·lint·실제 API 응답을 점검하는 체크리스트로 활용했습니다.
-
-다만 데이터 소스 선택, 화면 구조, 기능 반영, 실제 API 연결 확인은 프로젝트 요구사항에 맞춰 직접 검토하고 적용했습니다. 최종 상태에서 ESLint, production build, Python 문법 검사와 서울 관측·중기예보 API 호출을 실행해 확인했습니다.
+- 지도 구현에 AI 도움을 받았습니다.
