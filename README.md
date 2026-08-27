@@ -69,7 +69,7 @@ Vue 3 Composition API로 작성된 지역별 날씨 화면을 역할에 따라 �
 
 
 ## AI를 사용한 부분
-- slot 안에 들어간 컴포넌트가 어느 scope의 데이터를 참조하는지 헷갈려서 AI 도움을 받아 Vue의 slot scope 동작을 확인했습니다. 설명을 참고한 뒤 실제 데이터 연결은 `WeatherParent.vue`에서 직접 해 보고 재확인했습니다.
+- slot 안에 들어간 컴포넌트가 어느 scope의 데이터를 참조하는지 헷갈려서 AI 도움을 받아 Vue의 slot scope 동작을 확인하는데 도움을 받았습니다. 설명을 참고한 뒤 실제 데이터 연결은 `WeatherParent.vue`에서 직접 해 보고 재확인했습니다.
 - ESLint 10에서 기존 설정 파일을 읽지 못하는 문제는 오류 메시지만으로 해결이 잘되지 않아 flat config 구성을 찾는 데 도움을 받았습니다. 설정을 추가한 뒤 lint와 build는 직접 다시 실행했습니다.
 
 
