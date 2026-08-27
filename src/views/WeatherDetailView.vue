@@ -943,6 +943,21 @@ dd {
 .index-card__eyebrow { margin-bottom: 18px; color: #58727b; font-size: .76rem; }
 .index-card strong { color: #1d6479; }
 .index-card__status { border-radius: 8px; background: #edf6f7; }
+.index-card.is-cold { border-color: #87c5e7; border-top-color: #4f9dcc; background: linear-gradient(145deg, #e7f6ff, #fff 72%); }
+.index-card.is-cold strong { color: #247cae; }
+.index-card.is-cool { border-color: #a7d6e8; border-top-color: #73b6d1; background: linear-gradient(145deg, #eefaff, #fff 72%); }
+.index-card.is-comfortable { border-color: #a7d9c2; border-top-color: #55a77f; background: linear-gradient(145deg, #eaf9f1, #fff 72%); }
+.index-card.is-comfortable strong { color: #287d61; }
+.index-card.is-warm { border-color: #e9cd87; border-top-color: #c69740; background: linear-gradient(145deg, #fff8e7, #fff 72%); }
+.index-card.is-warm strong { color: #9d741d; }
+.index-card.is-hot { border-color: #e8aba6; border-top-color: #c96b62; background: linear-gradient(145deg, #fff0ef, #fff 72%); }
+.index-card.is-hot strong { color: #b65750; }
+.index-card--air.is-sky { border-color: #8dcced; border-top-color: #4d9fc9; background: linear-gradient(145deg, #e8f8ff, #fff 72%); }
+.index-card--air.is-sky-light { border-color: #b9dce9; border-top-color: #7fb7ce; background: linear-gradient(145deg, #f0faff, #fff 72%); }
+.index-card--air.is-yellow { border-color: #e6cf82; border-top-color: #c39b3d; background: linear-gradient(145deg, #fffbe6, #fff 72%); }
+.index-card--air.is-yellow strong { color: #9d7618; }
+.index-card--air.is-orange { border-color: #efb284; border-top-color: #c87848; background: linear-gradient(145deg, #fff2e9, #fff 72%); }
+.index-card--air.is-orange strong { color: #b45d35; }
 .index-card__unavailable--utci { display: flex; align-items: flex-start; gap: 12px; padding-top: 24px; }
 .index-card__unavailable-copy { margin-top: 0; }
 .index-card__unavailable-kicker { color: #657b83 !important; }
@@ -962,21 +977,45 @@ dd {
 @media (max-width: 700px) {
   .detail-page {
     width: min(100% - 28px, 520px);
-    padding: 32px 0;
+    padding: 20px 0 108px;
   }
 
+  .detail-card { padding: 26px 20px 30px; border-radius: 26px; }
+  .detail-card__back { font-size: .94rem; }
+  .detail-card__heading { align-items: flex-start; margin-top: 30px; gap: 14px; }
+  .detail-card__heading span:not(.detail-card__icon) { margin-top: 9px; font-size: .9rem; }
+  .detail-card__icon { flex: 0 0 auto; font-size: 4.25rem; }
+  h1 { font-size: clamp(3.3rem, 17vw, 4.65rem); }
+  .detail-card__temperature { margin-top: 26px; font-size: clamp(4.4rem, 22vw, 6rem); }
+  .detail-card__note { margin: 13px 0 27px; font-size: 1rem; line-height: 1.55; }
+
   .detail-card__metrics {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
   }
+
+  .detail-card__metrics div { min-width: 0; padding: 15px 10px; border-radius: 16px; }
+  .detail-card__metrics dt { margin-bottom: 5px; font-size: .75rem; }
+  .detail-card__metrics dd { overflow-wrap: anywhere; font-size: .9rem; line-height: 1.25; }
 
   .detail-card__indices {
     grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 28px;
   }
+
+  .index-card { min-height: 0; padding: 23px 20px; border-radius: 20px; }
+  .index-card__eyebrow { margin-bottom: 13px; }
+  .index-card strong { font-size: 2.65rem; }
+  .index-card > p:not(.index-card__eyebrow):not(.index-card__unavailable) { margin: 10px 0 14px; font-size: .9rem; line-height: 1.45; }
+  .index-card__status { margin-top: 10px; font-size: .86rem; }
+  .detail-card__forecast { margin-top: 32px; padding-top: 28px; }
+  .detail-card__forecast-heading h2 { font-size: clamp(1.8rem, 9vw, 2.2rem); }
 
   .detail-card__forecast-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
 
-  .outdoor-check-trigger { top: 8px; right: 4px; width: 104px; padding: 10px 8px; font-size: .78rem; }
-  .outdoor-check-trigger img { width: 76px; height: 76px; }
+  .outdoor-check-trigger { position: static; width: min(100%, 280px); margin: 18px auto 0; padding: 14px 12px; border-radius: 22px; font-size: .95rem; }
+  .outdoor-check-trigger img { width: 88px; height: 88px; }
   .outdoor-decision-panel { top: auto; right: 12px; bottom: 12px; width: calc(100vw - 24px); max-height: min(610px, calc(100vh - 24px)); padding: 23px; }
 }
 </style>
