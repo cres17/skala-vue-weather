@@ -2,7 +2,8 @@
 Vue 3 Composition API를 사용해 지역별 날씨 검색 화면을 만들었습니다.
 
 <img src="/screenshot/main.png" width="500" height="1000">
-## 적용한 내용
+
+## 요구사항별 구현 내용
 
 1. 반응형 상태 관리
    - `searchQuery`, `selectedCityInfo`, `weatherList`를 `ref`로 선언했습니다.
