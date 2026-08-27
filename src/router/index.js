@@ -5,7 +5,12 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      redirect: "/weather",
+      redirect: "/map",
+    },
+    {
+      path: "/map",
+      name: "weather-map",
+      component: () => import("../views/WeatherMapView.vue"),
     },
     {
       path: "/weather",

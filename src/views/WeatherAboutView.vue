@@ -1,11 +1,11 @@
 <template>
   <main class="about-page">
     <section class="about-card">
-      <p class="about-card__eyebrow">ABOUT WEATHER ROUTE</p>
-      <h1>도시별 날씨를 한눈에 확인하는 연습 서비스입니다.</h1>
+      <p class="about-card__eyebrow">서비스 소개</p>
+      <h1>나가기 전, 필요한 날씨만 빠르게.</h1>
       <p>
-        검색, 카드 선택, 상세 페이지 이동을 통해 Vue의 컴포넌트 통신과
-        Vue Router의 동적 경로를 함께 익힐 수 있도록 구성했습니다.
+        Outcast는 지도에서 지역을 고르고 기상청 현재 관측,
+        4~10일 중기예보와 외출 환경을 한곳에서 확인하는 날씨 서비스입니다.
       </p>
 
       <dl class="about-card__features">
@@ -31,84 +31,86 @@
 <style scoped>
 .about-page,
 .about-card {
-  width: min(760px, calc(100% - 40px));
+  width: min(1520px, calc(100% - 96px));
   margin: 0 auto;
 }
 
 .about-page {
-  padding: 64px 0;
+  padding: 82px 0;
 }
 
 .about-card {
-  padding: clamp(28px, 7vw, 64px);
+  padding: clamp(48px, 6vw, 92px);
   border: 1px solid var(--line-color);
-  border-radius: 28px;
+  border-radius: 32px;
   background: #fff;
-  box-shadow: 0 16px 45px rgb(42 82 101 / 9%);
+  box-shadow: var(--card-shadow);
 }
 
 .about-card__eyebrow {
   margin: 0 0 14px;
-  color: #238c9f;
-  font-size: 0.76rem;
+  color: var(--accent-color);
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.13em;
 }
 
 h1 {
-  max-width: 560px;
+  max-width: 1120px;
   margin: 0;
   color: var(--heading-color);
-  font-size: clamp(2rem, 5vw, 3.1rem);
-  letter-spacing: -0.06em;
-  line-height: 1.2;
+  font-size: clamp(3.5rem, 6vw, 6rem);
+  font-weight: 750;
+  letter-spacing: -0.075em;
+  line-height: 1;
 }
 
 h1 + p {
-  max-width: 570px;
-  margin: 20px 0 0;
-  color: #66808b;
+  max-width: 980px;
+  margin: 26px 0 0;
+  color: var(--secondary-color);
+  font-size: 1.25rem;
   line-height: 1.8;
 }
 
 .about-card__features {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin: 34px 0;
+  gap: 20px;
+  margin: 46px 0;
 }
 
 .about-card__features div {
-  padding: 17px;
-  border-radius: 15px;
-  background: #f1f8f9;
+  padding: 24px;
+  border-radius: 22px;
+  background: #f5f5f7;
 }
 
 dt {
   margin-bottom: 8px;
-  color: #18788a;
-  font-size: 0.9rem;
+  color: var(--heading-color);
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
 dd {
   margin: 0;
-  color: #66808b;
-  font-size: 0.82rem;
+  color: var(--secondary-color);
+  font-size: 1rem;
   line-height: 1.55;
 }
 
 .about-card__link {
   display: inline-flex;
-  padding: 12px 17px;
-  border-radius: 10px;
+  min-height: 56px;
+  padding: 17px 24px;
+  border-radius: 999px;
   color: #fff;
-  background: #247c8d;
+  background: var(--accent-color);
   font-weight: 700;
   text-decoration: none;
 }
 
-@media (max-width: 620px) {
+@media (max-width: 700px) {
   .about-page,
   .about-card {
     width: min(100% - 28px, 520px);

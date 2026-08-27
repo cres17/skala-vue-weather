@@ -27,25 +27,25 @@ defineProps({
 .dashboard-card {
   border: 1px solid var(--line-color);
   background: var(--surface-color);
-  box-shadow: 0 12px 36px rgb(42 82 101 / 8%);
+  box-shadow: var(--card-shadow);
 }
 
 .dashboard-card--search {
-  padding: 12px 14px;
-  border-radius: 18px;
+  padding: 20px 26px;
+  border-radius: 22px;
 }
 
 .dashboard-card--content {
-  padding: 24px;
-  border-radius: 24px;
+  padding: 38px;
+  border-radius: 30px;
 }
 
 .dashboard-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 24px;
+  margin-bottom: 28px;
 }
 
 .dashboard-card__footer {
@@ -54,7 +54,7 @@ defineProps({
   border-top: 1px solid var(--line-color);
 }
 
-@media (max-width: 560px) {
+@media (max-width: 700px) {
   .dashboard-card--content { padding: 18px; }
   .dashboard-card__header { align-items: flex-start; flex-direction: column; }
 }

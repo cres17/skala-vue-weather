@@ -48,13 +48,13 @@ function clearQuery() {
 </template>
 
 <style scoped>
-.search-bar { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-.search-bar__field { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; }
-.search-bar__icon { color: #5c8a98; font-size: 1.75rem; line-height: 1; transform: rotate(-20deg); }
-.search-bar input { width: 100%; min-width: 0; padding: 7px 0; border: 0; outline: 0; color: var(--text-color); background: transparent; }
-.search-bar input::placeholder { color: #9aabb3; }
-.search-bar__clear { display: grid; width: 26px; height: 26px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: #59717d; background: #e8eff2; }
-.search-bar__count { margin: 0; color: #6e858f; font-size: 0.9rem; white-space: nowrap; }
+.search-bar { display: flex; align-items: center; justify-content: space-between; gap: 22px; min-height: 60px; }
+.search-bar__field { display: flex; flex: 1; align-items: center; gap: 14px; min-width: 0; }
+.search-bar__icon { color: #6e6e73; font-size: 2.35rem; line-height: 1; transform: rotate(-20deg); }
+.search-bar input { width: 100%; min-width: 0; padding: 12px 0; border: 0; outline: 0; color: var(--text-color); background: transparent; font-size: 1.25rem; font-weight: 500; }
+.search-bar input::placeholder { color: #a1a1a6; }
+.search-bar__clear { display: grid; width: 40px; height: 40px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: #6e6e73; background: #e8e8ed; font-size: 1.25rem; }
+.search-bar__count { margin: 0; color: var(--secondary-color); font-size: 1.02rem; font-weight: 600; white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-@media (max-width: 560px) { .search-bar { align-items: stretch; flex-direction: column; gap: 8px; } .search-bar__count { padding-left: 38px; } }
+@media (max-width: 700px) { .search-bar { align-items: stretch; flex-direction: column; gap: 8px; } .search-bar__count { padding-left: 42px; } }
 </style>

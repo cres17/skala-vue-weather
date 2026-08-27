@@ -1,19 +1,25 @@
 {
-  "name": "vue-weather-reactivity",
+  "name": "outcast-weather",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "run-p server:dev vite:dev",
+    "server:dev": "python3 server/app.py",
+    "vite:dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "run-p server:dev vite:preview",
+    "vite:preview": "vite preview",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "axios": "^1.20.0",
+    "leaflet": "^1.9.4",
     "pinia": "^3.0.4",
+    "topojson-client": "^3.1.0",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4"
   },

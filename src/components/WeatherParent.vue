@@ -1,35 +1,45 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import BaseDashboardCard from "./exercise/BaseDashboardCard.vue";
 import SearchBar from "./exercise/SearchBar.vue";
 import WeatherCard from "./exercise/WeatherCard.vue";
-import { weatherList } from "../data/weather";
+import { getWeatherList, searchCities } from "../services/weather";
+import { useConfigStore } from "../stores/configStore";
+import { useFavoriteStore } from "../stores/favoriteStore";
 
 const router = useRouter();
+const configStore = useConfigStore();
+const favoriteStore = useFavoriteStore();
 const searchQuery = ref("");
 const selectedCity = ref(null);
-const temperatureUnit = ref("C");
-const favoriteCityIds = ref([]);
+const weatherList = ref([]);
+const isLoading = ref(true);
+const errorMessage = ref("");
 
-const normalizedSearchQuery = computed(() =>
-  searchQuery.value.trim().toLowerCase(),
-);
+async function updateSearchQuery(query) {
+  searchQuery.value = query;
+  errorMessage.value = "";
 
-const filteredWeatherList = computed(() => {
-  if (!normalizedSearchQuery.value) return weatherList;
-  return weatherList.filter((city) =>
-    city.name.toLowerCase().includes(normalizedSearchQuery.value),
-  );
-});
+  try {
+    if (!query.trim()) {
+      weatherList.value = await getWeatherList();
+      return;
+    }
 
-const favoriteCities = computed(() =>
-  weatherList.filter((city) => favoriteCityIds.value.includes(city.id)),
-);
+    weatherList.value = await searchCities(query.trim());
+  } catch (error) {
+    errorMessage.value = error.message;
+  }
+}
 
 const weatherSummary = computed(() => {
-  const hottestCity = weatherList.reduce((hottest, city) =>
+  if (!weatherList.value.length) {
+    return "날씨 정보를 불러오는 중입니다.";
+  }
+
+  const hottestCity = weatherList.value.reduce((hottest, city) =>
     city.temp > hottest.temp ? city : hottest,
   );
   return `오늘 가장 따뜻한 도시는 ${hottestCity.name}(${formatTemperature(hottestCity.temp)})입니다.`;
@@ -43,13 +53,11 @@ const selectedCityInfo = computed(() => {
 });
 
 function formatTemperature(celsius) {
-  return temperatureUnit.value === "C"
-    ? `${celsius}°C`
-    : `${Math.round((celsius * 9) / 5 + 32)}°F`;
-}
-
-function updateSearchQuery(query) {
-  searchQuery.value = query;
+  const temperature =
+    configStore.unit === "celsius"
+      ? celsius
+      : Math.round((celsius * 9) / 5 + 32);
+  return `${temperature}${configStore.unitSymbol}`;
 }
 
 function selectCity(city) {
@@ -57,47 +65,48 @@ function selectCity(city) {
 }
 
 function showDetail(city) {
-  router.push(`/weather/${city.id}`);
+  router.push({
+    name : "weather-detail",
+    params : {cityId: city.id},
+    query: {
+      name : city.name,
+      lat : city.lat,
+      lon : city.lon,
+    },
+  });
 }
 
 function toggleFavorite(city) {
-  const index = favoriteCityIds.value.indexOf(city.id);
-  if (index >= 0) {
-    favoriteCityIds.value.splice(index, 1);
-    return;
-  }
-  favoriteCityIds.value.push(city.id);
+  favoriteStore.toggleFavorite(city.id);
 }
 
 function isFavorite(city) {
-  return favoriteCityIds.value.includes(city.id);
+  return favoriteStore.isFavorite(city.id);
 }
+
+async function loadWeather() {
+  isLoading.value = true;
+  errorMessage.value = "";
+
+  try {
+    weatherList.value = await getWeatherList();
+  } catch (error) {
+    errorMessage.value = error.message;
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(loadWeather);
 </script>
 
 <template>
   <main class="weather-page">
     <section class="hero">
-      <p class="hero__eyebrow">VUE 3 · COMPONENT COMMUNICATION</p>
       <div class="hero__heading">
         <div>
           <h1>오늘의 지역별 날씨</h1>
           <p>도시를 검색하고, 카드를 선택해 현재 날씨를 확인하세요.</p>
-        </div>
-        <div class="unit-switch" aria-label="온도 단위 선택">
-          <button
-            type="button"
-            :class="{ active: temperatureUnit === 'C' }"
-            @click="temperatureUnit = 'C'"
-          >
-            °C
-          </button>
-          <button
-            type="button"
-            :class="{ active: temperatureUnit === 'F' }"
-            @click="temperatureUnit = 'F'"
-          >
-            °F
-          </button>
         </div>
       </div>
     </section>
@@ -105,7 +114,7 @@ function isFavorite(city) {
     <BaseDashboardCard variant="search" aria-label="도시 날씨 검색">
       <SearchBar
         :query="searchQuery"
-        :result-count="filteredWeatherList.length"
+        :result-count="weatherList.length"
         :total-count="weatherList.length"
         @update-query="updateSearchQuery"
       />
@@ -118,23 +127,31 @@ function isFavorite(city) {
     <div class="summary-card">
       <span aria-hidden="true">✦</span>
       <p>{{ weatherSummary }}</p>
-      <small>즐겨찾기 {{ favoriteCities.length }}개</small>
+      <small>즐겨찾기 {{ favoriteStore.favoriteCount }}개</small>
     </div>
 
     <BaseDashboardCard variant="content" aria-label="지역별 날씨 목록">
       <template #header>
         <div class="list-heading">
-          <p>LOCAL FORECAST</p>
           <h2>지역별 날씨 현황</h2>
         </div>
         <span class="list-heading__count"
-          >{{ filteredWeatherList.length }}개 도시</span
+          >{{ weatherList.length }}개 도시</span
         >
       </template>
 
-      <div v-if="filteredWeatherList.length" class="weather-grid">
+      <div v-if="isLoading" class="weather-message" role="status">
+        현재 날씨 정보를 불러오는 중입니다.
+      </div>
+
+      <section v-else-if="errorMessage" class="weather-message weather-message--error" role="alert">
+        <p>{{ errorMessage }}</p>
+        <button type="button" @click="loadWeather">다시 시도</button>
+      </section>
+
+      <div v-else-if="weatherList.length" class="weather-grid">
         <WeatherCard
-          v-for="city in filteredWeatherList"
+          v-for="city in weatherList"
           :key="city.id"
           :city="city"
           :temperature="formatTemperature(city.temp)"
@@ -155,32 +172,26 @@ function isFavorite(city) {
         </button>
       </section>
 
-      <template #footer>
-        <p class="component-note">
-          SearchBar와 WeatherCard는 이 카드의 slot 안에 배치되며, 상태는
-          WeatherParent가 props와 emits로 관리합니다.
-        </p>
-      </template>
     </BaseDashboardCard>
   </main>
 </template>
 
 <style scoped>
 .weather-page {
-  width: min(1120px, calc(100% - 40px));
+  width: min(1500px, calc(100% - 64px));
   margin: 0 auto;
-  padding: 72px 0 56px;
+  padding: 78px 0 90px;
 }
 
 .hero {
-  margin-bottom: 30px;
+  margin-bottom: 46px;
 }
 
 .hero__eyebrow,
 .list-heading p {
   margin: 0 0 10px;
   color: #238c9f;
-  font-size: 0.76rem;
+  font-size: .95rem;
   font-weight: 700;
   letter-spacing: 0.13em;
 }
@@ -195,64 +206,47 @@ function isFavorite(city) {
 .hero h1 {
   margin: 0;
   color: var(--heading-color);
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  letter-spacing: -0.06em;
-  line-height: 1.2;
+  max-width: 1100px;
+  font-size: clamp(3.5rem, 6vw, 6rem);
+  font-weight: 750;
+  letter-spacing: -0.075em;
+  line-height: 1;
 }
 
 .hero__heading p {
-  margin: 12px 0 0;
-  color: #6c818d;
-}
-
-.unit-switch {
-  display: flex;
-  padding: 4px;
-  border-radius: 12px;
-  background: #e4edf1;
-}
-
-.unit-switch button {
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 8px;
-  color: #6c818d;
-  background: transparent;
-  font-weight: 700;
-}
-
-.unit-switch button.active {
-  color: #197d91;
-  background: #fff;
-  box-shadow: 0 2px 7px rgb(71 103 121 / 11%);
+  margin: 16px 0 0;
+  color: var(--secondary-color);
+  font-size: 1.25rem;
+  line-height: 1.5;
 }
 
 .status-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 14px 0 18px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  color: #39707d;
-  background: #e2f3f3;
-  font-size: 0.9rem;
+  margin: 22px 0 18px;
+  padding: 18px 22px;
+  border-radius: 18px;
+  color: #3a3a3c;
+  background: #e8f2ff;
+  font-size: 1.12rem;
+  font-weight: 600;
 }
 
 .status-bar span {
-  color: #32aa9b;
-  font-size: 0.7rem;
+  color: #34c759;
+  font-size: .88rem;
 }
 
 .summary-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 13px 17px;
-  border-radius: 13px;
-  color: #e8fafb;
-  background: #173b4f;
+  gap: 14px;
+  margin-bottom: 28px;
+  padding: 22px 26px;
+  border-radius: 20px;
+  color: #f5f5f7;
+  background: #1d1d1f;
 }
 
 .summary-card > span {
@@ -262,11 +256,11 @@ function isFavorite(city) {
 .summary-card p {
   flex: 1;
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 1.04rem;
 }
 
 .summary-card small {
-  color: #a8ced6;
+  color: #a1a1a6;
 }
 
 .list-heading p {
@@ -276,22 +270,23 @@ function isFavorite(city) {
 .list-heading h2 {
   margin: 0;
   color: var(--heading-color);
-  font-size: 1.45rem;
+  font-size: 2.25rem;
+  letter-spacing: -.05em;
 }
 
 .list-heading__count {
-  padding: 7px 11px;
+  padding: 10px 14px;
   border-radius: 99px;
-  color: #39707d;
-  background: #edf6f7;
-  font-size: 0.82rem;
+  color: #3a3a3c;
+  background: #f2f2f7;
+  font-size: 1.08rem;
   font-weight: 700;
 }
 
 .weather-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  gap: 22px;
 }
 
 .empty-state {
@@ -299,6 +294,29 @@ function isFavorite(city) {
   border: 1px dashed #bfd6dc;
   border-radius: 18px;
   text-align: center;
+}
+
+.weather-message {
+  padding: 48px 20px;
+  color: #66808b;
+  text-align: center;
+}
+
+.weather-message--error {
+  color: #b64646;
+}
+
+.weather-message p {
+  margin: 0 0 14px;
+}
+
+.weather-message button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #247c8d;
+  font-weight: 700;
 }
 
 .empty-state > span {
@@ -324,23 +342,16 @@ function isFavorite(city) {
   font-weight: 700;
 }
 
-.component-note {
-  margin: 0;
-  color: #78909a;
-  font-size: 0.8rem;
-  text-align: center;
-}
-
 @media (max-width: 820px) {
   .weather-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 700px) {
   .weather-page {
     width: min(100% - 28px, 520px);
-    padding-top: 42px;
+    padding-top: 46px;
   }
 
   .hero__heading {
@@ -359,5 +370,7 @@ function isFavorite(city) {
   .weather-grid {
     grid-template-columns: 1fr;
   }
+
+  .hero h1 { font-size: clamp(3.15rem, 16vw, 4.5rem); }
 }
 </style>

@@ -2,7 +2,7 @@
   <main class="not-found-page">
     <section class="not-found-card">
       <span aria-hidden="true">🌦️</span>
-      <p>404 · NOT FOUND</p>
+      <p>요청한 페이지를 찾을 수 없습니다</p>
       <h1>찾으시는 페이지가 없어요.</h1>
       <RouterLink to="/weather">날씨 목록으로 돌아가기</RouterLink>
     </section>
@@ -18,12 +18,12 @@
 }
 
 .not-found-card {
-  max-width: 500px;
-  padding: 50px 40px;
+  max-width: 680px;
+  padding: 72px 54px;
   border: 1px solid var(--line-color);
-  border-radius: 28px;
+  border-radius: 32px;
   background: #fff;
-  box-shadow: 0 16px 45px rgb(42 82 101 / 9%);
+  box-shadow: var(--card-shadow);
   text-align: center;
 }
 
@@ -33,8 +33,8 @@
 
 .not-found-card p {
   margin: 25px 0 8px;
-  color: #238c9f;
-  font-size: 0.76rem;
+  color: var(--accent-color);
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.13em;
 }
@@ -42,16 +42,17 @@
 h1 {
   margin: 0 0 25px;
   color: var(--heading-color);
-  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  font-size: clamp(2.7rem, 7vw, 4.4rem);
   letter-spacing: -0.06em;
 }
 
 a {
   display: inline-block;
-  padding: 12px 17px;
-  border-radius: 10px;
+  min-height: 56px;
+  padding: 17px 24px;
+  border-radius: 999px;
   color: #fff;
-  background: #247c8d;
+  background: var(--accent-color);
   font-weight: 700;
   text-decoration: none;
 }
