@@ -14,14 +14,10 @@ Vue 3로 만든 지역별 날씨 앱입니다. 이전 단계에서 만든 컴포
 \`src/services/weather.js\`에 Axios 인스턴스를 만들고, API 요청과 응답 변환 코드를 화면 컴포넌트 밖으로 분리했습니다. 화면은 \`getWeatherList\`, \`getWeatherForCity\`, \`searchCities\` 함수만 호출하므로 HTTP 요청 세부 사항을 알 필요가 없습니다.
 
 
-\`\`\`js
-
 const weatherApi = axios.create({
   baseURL: "https://api.openweathermap.org/data/2.5",
   timeout: 10_000,
 });
-
-\`\`\`
 
 
 - 초기 목록: 도시별 위도·경도로 \`/weather\`를 호출합니다.
@@ -43,15 +39,11 @@ const weatherApi = axios.create({
 
 상세 페이지의 주소는 \`/weather/:cityId\`입니다. 기본 도시의 ID는 서비스 레이어에 정의해 두었고, 검색 결과는 도시 이름·위도·경도를 query string으로 함께 전달합니다. 상세 화면은 주소를 기준으로 다시 API를 호출하므로 새로고침하거나 URL을 공유해도 같은 도시를 표시할 수 있습니다.
 
-
-\`\`\`js
 router.push({
   name: "weather-detail",
   params: { cityId: city.id },
   query: { name: city.name, lat: city.lat, lon: city.lon },
 });
-\`\`\`
-
 
 \`watch\`로 \`cityId\` 변화를 감지해, 상세 화면에서 다른 도시 URL로 이동해도 날씨를 다시 불러옵니다.
 
@@ -64,14 +56,10 @@ router.push({
 
 원본 날씨 데이터는 섭씨로 유지하고 화면에 표시할 때만 화씨로 변환합니다. 상단의 단위 버튼을 누르면 목록과 상세 화면의 온도가 함께 갱신됩니다.
 
-
-\`\`\`js
 const temperature =
   configStore.unit === "celsius"
     ? celsius
     : Math.round((celsius * 9) / 5 + 32);
-\`\`\`
-
 
 ## 트러블 슈팅
 
