@@ -19,8 +19,8 @@ const formattedTemperature = computed(() => {
   return `${temperature}${configStore.unitSymbol}`;
 });
 
-const formattedForecastTemperature = computed(() => {
-  const temperature = city.value?.forecast?.temperature;
+const formattedObservationTemperature = computed(() => {
+  const temperature = city.value?.observation?.temperature;
 
   if (temperature === null || temperature === undefined) return "-";
   if (configStore.unit === "celsius") return `${temperature}°C`;
@@ -113,47 +113,67 @@ watch(() => route.fullPath, loadWeather, { immediate: true });
         </div>
       </dl>
 
-      <section class="forecast" aria-labelledby="forecast-title">
+      <section class="forecast" aria-labelledby="observation-title">
         <div class="forecast__heading">
           <div>
-            <p>기상청 단기예보</p>
-            <h2 id="forecast-title">{{ city.forecast?.forecastAt || "예보 준비 중" }}</h2>
+            <p>기상청 지상 관측</p>
+            <h2 id="observation-title">
+              {{ city.observation?.observedAt || "관측 자료 준비 중" }}
+            </h2>
           </div>
-          <span v-if="city.forecast">{{ city.forecast.announcedAt }} 발표</span>
+          <span v-if="city.observation">
+            {{ city.observation.stationName }} 관측소 · {{ city.observation.stationId }}
+          </span>
         </div>
 
-        <dl v-if="city.forecast" class="forecast__metrics">
+        <dl v-if="city.observation" class="forecast__metrics">
           <div>
-            <dt>예보 기온</dt>
-            <dd>{{ formattedForecastTemperature }}</dd>
+            <dt>관측 기온</dt>
+            <dd>{{ formattedObservationTemperature }}</dd>
           </div>
           <div>
-            <dt>하늘 상태</dt>
-            <dd>{{ city.forecast.sky }}</dd>
+            <dt>이슬점</dt>
+            <dd>{{ city.observation.dewPoint }}</dd>
           </div>
           <div>
-            <dt>강수 형태</dt>
-            <dd>{{ city.forecast.precipitationType }}</dd>
+            <dt>상대 습도</dt>
+            <dd>{{ city.observation.humidity }}</dd>
           </div>
           <div>
-            <dt>강수 확률</dt>
-            <dd>{{ city.forecast.precipitationProbability }}</dd>
-          </div>
-          <div>
-            <dt>1시간 강수량</dt>
-            <dd>{{ city.forecast.precipitation }}</dd>
-          </div>
-          <div>
-            <dt>적설</dt>
-            <dd>{{ city.forecast.snowfall }}</dd>
-          </div>
-          <div>
-            <dt>습도</dt>
-            <dd>{{ city.forecast.humidity }}</dd>
+            <dt>풍향</dt>
+            <dd>{{ city.observation.windDirection }}</dd>
           </div>
           <div>
             <dt>풍속</dt>
-            <dd>{{ city.forecast.windSpeed }}</dd>
+            <dd>{{ city.observation.windSpeed }}</dd>
+          </div>
+          <div>
+            <dt>최대 돌풍</dt>
+            <dd>{{ city.observation.gustSpeed }}</dd>
+          </div>
+          <div>
+            <dt>현지 기압</dt>
+            <dd>{{ city.observation.localPressure }}</dd>
+          </div>
+          <div>
+            <dt>해면 기압</dt>
+            <dd>{{ city.observation.seaLevelPressure }}</dd>
+          </div>
+          <div>
+            <dt>강수량</dt>
+            <dd>{{ city.observation.precipitation }}</dd>
+          </div>
+          <div>
+            <dt>일 강수량</dt>
+            <dd>{{ city.observation.dailyPrecipitation }}</dd>
+          </div>
+          <div>
+            <dt>강수 강도</dt>
+            <dd>{{ city.observation.precipitationIntensity }}</dd>
+          </div>
+          <div>
+            <dt>적설</dt>
+            <dd>{{ city.observation.snowDepth }}</dd>
           </div>
         </dl>
         <p v-else class="forecast__error">{{ city.kmaError }}</p>

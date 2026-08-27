@@ -5,21 +5,19 @@ const weatherApi = axios.create({
   timeout: 10_000,
 });
 
-const kmaForecastApi = axios.create({
-  baseURL:
-    "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0",
+const kmaObservationApi = axios.create({
+  // 기상청 API 허브는 CORS 헤더를 제공하지 않아 개발 중 Vite 프록시를 사용한다.
+  baseURL: import.meta.env.VITE_KMA_API_BASE_URL || "/api/kma/typ01/url",
   timeout: 10_000,
 });
 
-const KMA_FORECAST_BASE_HOURS = [2, 5, 8, 11, 14, 17, 20, 23];
-
 const cities = [
-  { id: "seoul", name: "서울", lat: 37.5665, lon: 126.978 },
-  { id: "suwon", name: "수원", lat: 37.2636, lon: 127.0286 },
-  { id: "busan", name: "부산", lat: 35.1796, lon: 129.0756 },
-  { id: "jeju", name: "제주", lat: 33.4996, lon: 126.5312 },
-  { id: "daejeon", name: "대전", lat: 36.3504, lon: 127.3845 },
-  { id: "gwangju", name: "광주", lat: 35.1595, lon: 126.8526 },
+  { id: "seoul", name: "서울", lat: 37.5665, lon: 126.978, stationId: "108" },
+  { id: "suwon", name: "수원", lat: 37.2636, lon: 127.0286, stationId: "119" },
+  { id: "busan", name: "부산", lat: 35.1796, lon: 129.0756, stationId: "159" },
+  { id: "jeju", name: "제주", lat: 33.4996, lon: 126.5312, stationId: "184" },
+  { id: "daejeon", name: "대전", lat: 36.3504, lon: 127.3845, stationId: "133" },
+  { id: "gwangju", name: "광주", lat: 35.1595, lon: 126.8526, stationId: "156" },
 ];
 
 function getWeatherIcon(conditionId) {
@@ -46,6 +44,17 @@ function getApiKey() {
   }
 
   return apiKey;
+}
+
+function getKmaAuthKey() {
+  const authKey =
+    import.meta.env.VITE_KMA_AUTH_KEY || import.meta.env.VITE_KMA_API_KEY;
+
+  if (!authKey) {
+    throw new Error("기상청 API 인증키가 설정되지 않았습니다.");
+  }
+
+  return authKey;
 }
 
 function toWeatherCity(city, weather) {
@@ -79,195 +88,92 @@ function toWeatherError(error) {
   return new Error(message || "날씨 정보를 불러오지 못했습니다.");
 }
 
-function getKmaAuthKey() {
-  const authKey =
-    import.meta.env.VITE_KMA_AUTH_KEY || import.meta.env.VITE_KMA_API_KEY;
+function getNearestKmaStation(city) {
+  if (city.stationId) return city;
 
-  if (!authKey) {
-    throw new Error("기상청 API 인증키가 설정되지 않았습니다.");
+  return cities.reduce((nearest, candidate) => {
+    const nearestDistance =
+      (city.lat - nearest.lat) ** 2 + (city.lon - nearest.lon) ** 2;
+    const candidateDistance =
+      (city.lat - candidate.lat) ** 2 + (city.lon - candidate.lon) ** 2;
+
+    return candidateDistance < nearestDistance ? candidate : nearest;
+  });
+}
+
+function isMissingKmaValue(value) {
+  return value === undefined || value === "" || Number(value) === -9;
+}
+
+function getKmaText(value, unit = "") {
+  return isMissingKmaValue(value) ? "-" : `${value}${unit}`;
+}
+
+function getKmaNumber(value) {
+  return isMissingKmaValue(value) ? null : Number(value);
+}
+
+function formatKmaObservationTime(value) {
+  if (!/^\d{12}$/.test(value)) return value || "관측 시각 정보 없음";
+
+  return `${value.slice(4, 6)}월 ${value.slice(6, 8)}일 ${value.slice(8, 10)}:${value.slice(10, 12)}`;
+}
+
+function parseKmaObservation(raw, station) {
+  const observationLine = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line && !line.startsWith("#"));
+
+  if (!observationLine) {
+    throw new Error("기상청 지상 관측 자료가 아직 준비되지 않았습니다.");
   }
 
-  return authKey;
-}
+  const values = observationLine.split(/\s+/);
 
-function getKoreaDateParts(date = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-
-  return Object.fromEntries(
-    parts
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, Number(part.value)]),
-  );
-}
-
-function formatDate({ year, month, day }) {
-  return `${year}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
-}
-
-function getKmaBaseDateTime(now = new Date()) {
-  const koreaNow = getKoreaDateParts(now);
-  const minutes = koreaNow.hour * 60 + koreaNow.minute;
-  const baseHour = [...KMA_FORECAST_BASE_HOURS]
-    .reverse()
-    .find((hour) => minutes >= hour * 60 + 10);
-
-  if (baseHour !== undefined) {
-    return {
-      baseDate: formatDate(koreaNow),
-      baseTime: `${String(baseHour).padStart(2, "0")}00`,
-    };
+  if (values.length < 22) {
+    throw new Error("기상청 지상 관측 응답 형식을 확인하지 못했습니다.");
   }
-
-  const yesterday = new Date(
-    Date.UTC(koreaNow.year, koreaNow.month - 1, koreaNow.day - 1),
-  );
-  const previousDate = {
-    year: yesterday.getUTCFullYear(),
-    month: yesterday.getUTCMonth() + 1,
-    day: yesterday.getUTCDate(),
-  };
-
-  return { baseDate: formatDate(previousDate), baseTime: "2300" };
-}
-
-function toKmaGrid(lat, lon) {
-  const radius = 6371.00877;
-  const gridSpacing = 5;
-  const standardLatitude1 = (30 * Math.PI) / 180;
-  const standardLatitude2 = (60 * Math.PI) / 180;
-  const originLongitude = (126 * Math.PI) / 180;
-  const originLatitude = (38 * Math.PI) / 180;
-  const originX = 43;
-  const originY = 136;
-  const earthRadius = radius / gridSpacing;
-  const sn =
-    Math.log(Math.cos(standardLatitude1) / Math.cos(standardLatitude2)) /
-    Math.log(
-      Math.tan(Math.PI * 0.25 + standardLatitude2 * 0.5) /
-        Math.tan(Math.PI * 0.25 + standardLatitude1 * 0.5),
-    );
-  const sf =
-    (Math.pow(Math.tan(Math.PI * 0.25 + standardLatitude1 * 0.5), sn) *
-      Math.cos(standardLatitude1)) /
-    sn;
-  const ro =
-    (earthRadius * sf) /
-    Math.pow(Math.tan(Math.PI * 0.25 + originLatitude * 0.5), sn);
-  const radiusAtPoint =
-    (earthRadius * sf) /
-    Math.pow(Math.tan(Math.PI * 0.25 + (lat * Math.PI) / 360), sn);
-  let theta = (lon * Math.PI) / 180 - originLongitude;
-
-  if (theta > Math.PI) theta -= 2 * Math.PI;
-  if (theta < -Math.PI) theta += 2 * Math.PI;
-  theta *= sn;
 
   return {
-    nx: Math.floor(radiusAtPoint * Math.sin(theta) + originX + 0.5),
-    ny: Math.floor(ro - radiusAtPoint * Math.cos(theta) + originY + 0.5),
+    stationName: station.name,
+    stationId: values[1],
+    observedAt: formatKmaObservationTime(values[0]),
+    temperature: getKmaNumber(values[11]),
+    dewPoint: getKmaText(values[12], "°C"),
+    humidity: getKmaText(values[13], "%"),
+    windDirection: getKmaText(values[2], " 방향"),
+    windSpeed: getKmaText(values[3], " m/s"),
+    gustSpeed: getKmaText(values[5], " m/s"),
+    localPressure: getKmaText(values[7], " hPa"),
+    seaLevelPressure: getKmaText(values[8], " hPa"),
+    precipitation: getKmaText(values[15], " mm"),
+    dailyPrecipitation: getKmaText(values[16], " mm"),
+    precipitationIntensity: getKmaText(values[18], " mm/h"),
+    snowfall: getKmaText(values[19], " cm"),
+    dailySnowfall: getKmaText(values[20], " cm"),
+    snowDepth: getKmaText(values[21], " cm"),
   };
 }
 
-function getForecastTarget(items, now = new Date()) {
-  const koreaNow = getKoreaDateParts(now);
-  const nowKey = `${formatDate(koreaNow)}${String(koreaNow.hour)
-    .padStart(2, "0")}00`;
-  const targetKeys = [...new Set(items.map((item) => `${item.fcstDate}${item.fcstTime}`))]
-    .filter((key) => key >= nowKey)
-    .sort();
-
-  return targetKeys[0] || null;
-}
-
-function getPrecipitationType(value) {
-  return (
-    {
-      0: "강수 없음",
-      1: "비",
-      2: "비 또는 눈",
-      3: "눈",
-      4: "소나기",
-    }[Number(value)] || "알 수 없음"
-  );
-}
-
-function getSkyStatus(value) {
-  return (
-    {
-      1: "맑음",
-      3: "구름많음",
-      4: "흐림",
-    }[Number(value)] || "날씨 정보 없음"
-  );
-}
-
-function formatKmaDateTime(date, time) {
-  return `${date.slice(4, 6)}월 ${date.slice(6, 8)}일 ${time.slice(0, 2)}시`;
-}
-
-function toKmaForecast(items, baseDate, baseTime) {
-  const target = getForecastTarget(items);
-
-  if (!target) {
-    throw new Error("기상청 예보 자료에서 다음 예보 시각을 찾지 못했습니다.");
-  }
-
-  const forecastItems = items.filter(
-    (item) => `${item.fcstDate}${item.fcstTime}` === target,
-  );
-  const values = Object.fromEntries(
-    forecastItems.map((item) => [item.category, item.fcstValue]),
-  );
-
-  return {
-    announcedAt: formatKmaDateTime(baseDate, baseTime),
-    forecastAt: formatKmaDateTime(target.slice(0, 8), target.slice(8)),
-    temperature: values.TMP ? Number(values.TMP) : null,
-    precipitationProbability: values.POP ? `${values.POP}%` : "-",
-    precipitation: values.PCP || "강수 없음",
-    snowfall: values.SNO || "적설 없음",
-    humidity: values.REH ? `${values.REH}%` : "-",
-    windSpeed: values.WSD ? `${values.WSD} m/s` : "-",
-    sky: getSkyStatus(values.SKY),
-    precipitationType: getPrecipitationType(values.PTY),
-  };
-}
-
-async function getKmaForecastForCity(city) {
-  const { baseDate, baseTime } = getKmaBaseDateTime();
-  const { nx, ny } = toKmaGrid(city.lat, city.lon);
+async function getKmaObservationForCity(city) {
+  const station = getNearestKmaStation(city);
 
   try {
-    const { data } = await kmaForecastApi.get("/getVilageFcst", {
+    const { data } = await kmaObservationApi.get("/kma_sfctm2.php", {
       params: {
-        pageNo: 1,
-        numOfRows: 1000,
-        dataType: "JSON",
-        base_date: baseDate,
-        base_time: baseTime,
-        nx,
-        ny,
+        stn: station.stationId,
+        help: 0,
         authKey: getKmaAuthKey(),
       },
+      responseType: "text",
     });
-    const response = data?.response;
 
-    if (response?.header?.resultCode !== "00") {
-      throw new Error(response?.header?.resultMsg || "기상청 API 요청에 실패했습니다.");
-    }
-
-    return toKmaForecast(response.body?.items?.item || [], baseDate, baseTime);
+    return parseKmaObservation(data, station);
   } catch (error) {
     if (!axios.isAxiosError(error)) throw error;
-    throw new Error("기상청 단기예보를 불러오지 못했습니다.", {
+
+    throw new Error("기상청 지상 관측 자료를 불러오지 못했습니다.", {
       cause: error,
     });
   }
@@ -294,15 +200,15 @@ export async function getWeatherForCity(city) {
 export async function getWeatherDetailForCity(city) {
   const [weather, kmaResult] = await Promise.all([
     getWeatherForCity(city),
-    getKmaForecastForCity(city).then(
-      (forecast) => ({ forecast, error: "" }),
-      (error) => ({ forecast: null, error: error.message }),
+    getKmaObservationForCity(city).then(
+      (observation) => ({ observation, error: "" }),
+      (error) => ({ observation: null, error: error.message }),
     ),
   ]);
 
   return {
     ...weather,
-    forecast: kmaResult.forecast,
+    observation: kmaResult.observation,
     kmaError: kmaResult.error,
   };
 }
@@ -318,25 +224,23 @@ export function getCityById(cityId) {
 export async function searchCities(query) {
   const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
-  const { data: locations } = await weatherApi.get("/geo/1.0/direct", {baseURL:"https://api.openweathermap.org",
-    params : {
-      q : `${query}, KR`,
-      limit : 5,
-      appid : apiKey,
+  const { data: locations } = await weatherApi.get("/geo/1.0/direct", {
+    baseURL: "https://api.openweathermap.org",
+    params: {
+      q: `${query}, KR`,
+      limit: 5,
+      appid: apiKey,
     },
-});
+  });
 
-  const weatherCities = await Promise.all(
-    locations.map(async (location) => {
-      const city = {
-        id : `${location.lat}-${location.lon}`,
-        name : location.local_names?.ko || location.name,
-        lat : location.lat,
-        lon : location.lon,
-      };
-
-      return getWeatherForCity(city);
-    }),
+  return Promise.all(
+    locations.map((location) =>
+      getWeatherForCity({
+        id: `${location.lat}-${location.lon}`,
+        name: location.local_names?.ko || location.name,
+        lat: location.lat,
+        lon: location.lon,
+      }),
+    ),
   );
-  return weatherCities;
 }
