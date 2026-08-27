@@ -13,5 +13,5 @@ Vue 학습 과제를 브랜치별로 관리하는 저장소입니다.
 | 5 | Weather Store | `5-weather-store` | 완료 |
 | 6 | Weather Axios | `6-weather-axios` | 완료 |
 | 7 | Weather UI Library | `7-weather-ui-library` | 완료 |
-| 8 | Weather Deployment | `8-weather-deployment` | 진행 전 |
-[ 9 ] final_project | 9-weather-final | 진행 중 |
+| 8 | Weather Deployment | `8-weather-deployment` | 완료 |
+| 9 | final_project | `9-weather-final` | 완료 |
