@@ -41,16 +41,16 @@ npm run build
 
 ### 2. GitHub Pages 배포 및 확인
 
-GitHub Pages는 정적 파일을 호스팅하는 서비스입니다. GitHub Actions가 `main` 브랜치에 푸시될 때마다 프로젝트를 빌드하고 `dist/` 폴더를 GitHub Pages에 배포합니다.
+GitHub Pages는 정적 파일을 호스팅하는 서비스입니다. GitHub Actions가 `main` 또는 `8-weather-deployment` 브랜치에 푸시될 때마다 프로젝트를 빌드하고 `dist/` 폴더를 GitHub Pages에 배포합니다.
 
 1. GitHub 저장소의 **Settings → Pages → Build and deployment**에서 Source를 **GitHub Actions**로 선택합니다.
 2. **Settings → Secrets and variables → Actions**에서 `VITE_OPENWEATHER_API_KEY`를 Repository secret으로 등록합니다.
-3. 변경 사항을 `main` 브랜치로 푸시합니다.
+3. 변경 사항을 `8-weather-deployment` 브랜치로 푸시합니다.
 
    ```bash
    git add README.md vite.config.js .github/workflows/deploy.yml
    git commit -m "ci: deploy to GitHub Pages"
-   git push origin main
+   git push origin 8-weather-deployment
    ```
 
 4. GitHub 저장소의 **Actions** 탭에서 배포 workflow가 성공한 것을 확인합니다.
