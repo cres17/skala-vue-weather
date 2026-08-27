@@ -1,25 +1,59 @@
-# Weather UI Library
+# Weather Deployment
 
-Vue 3로 만든 지역별 날씨 앱입니다. 브랜치별 학습 과정을 누적해, 현재는 OpenWeather의 실시간 날씨와 기상청 지상 관측을 한 화면에서 확인할 수 있습니다.
+## Source Code 품질관리
 
-## 요구사항별 구현 내용
+### 1. ESLint 점검
 
-### 기상청 지상 시간관측 상세 정보
+제출 전 ESLint와 Oxlint로 소스 코드를 점검해 오류가 없도록 관리했습니다.
 
-상세 페이지는 OpenWeather 현재 날씨와 기상청 API 허브의 지상 시간관측 자료를 병렬로 요청합니다. 도시별 관측소 지점번호(`stn`)를 사용하며, 개발 환경에서는 Vite 프록시로 기상청 API의 CORS 제한을 처리합니다.
+```bash
+npm run lint
+```
 
-기상청 관측 응답에서 다음 정보를 표시합니다.
+`lint` 명령은 ESLint와 Oxlint를 실행하며, 자동 수정 가능한 항목도 함께 정리합니다.
 
-- 기온 (`TA`), 이슬점 (`TD`), 상대습도 (`HM`)
-- 풍향·풍속·돌풍 (`WD`, `WS`, `GST_WS`)
-- 현지·해면기압 (`PA`, `PS`), 강수량·강수강도 (`RN`, `RN_INT`), 적설 (`SD_TOT`)
+<img src="./screenshot/ESLint_1.png" width="700" alt="ESLint 점검 결과 1">
 
-기상청 API 키가 없거나 해당 요청만 실패한 경우에는 상세 화면에 안내를 표시하고 OpenWeather 현재 날씨는 그대로 유지합니다. 배포 환경에서는 `/api/kma` 요청을 기상청 API 허브로 전달하는 서버 프록시를 구성해야 합니다.
+<img src="./screenshot/ESLint_2.png" width="700" alt="ESLint 점검 결과 2">
 
-<img src="/screenshot/more_detail.png" width="500" alt="기상청 API로 풍부해진 정보">
+### 2. API 키 환경 변수 관리
 
-## AI 사용 범위
+API 키는 `.env` 환경 변수로 관리하고, 실제 키가 담긴 파일은 Git에 업로드하지 않습니다. `.gitignore`에서 `.env`와 `.env.*`를 제외하고, 키 이름만 담긴 `.env.example` 파일만 공유합니다.
 
-- 기상청 지상 시간관측 API의 요청 형식과 관측 항목을 확인했습니다.
-- 기상청 API의 CORS 제한을 개발 프록시로 처리했습니다.
-- API 응답을 화면용 데이터로 분리하고, 기상청 관측 실패가 현재 날씨 화면을 막지 않도록 오류 처리를 구성했습니다.
+```dotenv
+VITE_OPENWEATHER_API_KEY=your_openweather_api_key
+VITE_KMA_AUTH_KEY=your_kma_auth_key
+```
+
+## Build & Deployment
+
+### 1. 프로젝트 Build
+
+아래 명령으로 프로덕션용 정적 파일을 생성합니다.
+
+```bash
+npm run build
+```
+
+빌드가 완료되면 `dist/` 폴더에 정적 파일이 생성됩니다.
+
+<img src="./screenshot/build_photo.png" width="700" alt="배포 스크린샷">
+
+### 2. GitHub Pages 배포 및 확인
+
+GitHub Pages는 정적 파일을 호스팅하는 서비스입니다. GitHub Actions가 `main` 브랜치에 푸시될 때마다 프로젝트를 빌드하고 `dist/` 폴더를 GitHub Pages에 배포합니다.
+
+1. GitHub 저장소의 **Settings → Pages → Build and deployment**에서 Source를 **GitHub Actions**로 선택합니다.
+2. **Settings → Secrets and variables → Actions**에서 `VITE_OPENWEATHER_API_KEY`를 Repository secret으로 등록합니다.
+3. 변경 사항을 `main` 브랜치로 푸시합니다.
+
+   ```bash
+   git add README.md vite.config.js .github/workflows/deploy.yml
+   git commit -m "ci: deploy to GitHub Pages"
+   git push origin main
+   ```
+
+4. GitHub 저장소의 **Actions** 탭에서 배포 workflow가 성공한 것을 확인합니다.
+5. 배포 주소에서 서비스가 정상적으로 열리는지 확인합니다.
+
+   `https://cres17.github.io/skala-vue-weather/`

@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const kmaAuthKey = env.VITE_KMA_AUTH_KEY || env.VITE_KMA_API_KEY || env.KMA_API_KEY || ''
 
   return {
+    base: "/skala-vue-weather/",
     plugins: [
       vue(),
       vueDevTools(),
@@ -32,5 +33,6 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_KMA_AUTH_KEY': JSON.stringify(kmaAuthKey),
     },
+    
   }
 })
