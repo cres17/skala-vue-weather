@@ -4,7 +4,7 @@ Vue에서 배운 디렉티브와 이벤트 처리를 한 화면에 적용해 보
 
 <img src="/screenshot/main_page.png" width="500" height="1000">
 
-## 적용한 내용
+## 요구사항별 구현 내용
 
 ### 1. 날씨 카드 반복 출력
 
