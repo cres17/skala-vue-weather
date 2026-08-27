@@ -1,10 +1,21 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { weatherList } from "../data/weather";
+import { useConfigStore } from "../stores/configStore";
 
 const route = useRoute();
+const configStore = useConfigStore();
 const city = ref(null);
+
+const formattedTemperature = computed(() => {
+  if (!city.value) return "";
+  const temperature =
+    configStore.unit === "celsius"
+      ? city.value.temp
+      : Math.round((city.value.temp * 9) / 5 + 32);
+  return `${temperature}${configStore.unitSymbol}`;
+});
 
 onMounted(() => {
   city.value = weatherList.find((weather) => weather.id === route.params.cityId);
@@ -24,7 +35,7 @@ onMounted(() => {
         <span class="detail-card__icon" aria-hidden="true">{{ city.icon }}</span>
       </div>
 
-      <div class="detail-card__temperature">{{ city.temp }}°C</div>
+      <div class="detail-card__temperature">{{ formattedTemperature }}</div>
       <p class="detail-card__note">{{ city.note }}</p>
 
       <dl class="detail-card__metrics">

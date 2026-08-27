@@ -1,3 +1,7 @@
+<script setup>
+import UnitToggler from "./components/UnitToggler.vue";
+</script>
+
 <template>
   <div class="app-shell">
     <header class="app-header">
@@ -5,6 +9,7 @@
       <nav class="app-header__nav" aria-label="주요 메뉴">
         <RouterLink to="/weather">날씨</RouterLink>
         <RouterLink to="/about">서비스 소개</RouterLink>
+        <UnitToggler />
       </nav>
     </header>
 
@@ -36,6 +41,7 @@
 
 .app-header__nav {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
