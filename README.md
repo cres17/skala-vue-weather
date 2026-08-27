@@ -15,10 +15,12 @@ Vue 3로 만든 지역별 날씨 앱입니다. 이전 단계에서 만든 컴포
 
 
 \`\`\`js
+
 const weatherApi = axios.create({
   baseURL: "https://api.openweathermap.org/data/2.5",
   timeout: 10_000,
 });
+
 \`\`\`
 
 
