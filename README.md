@@ -2,41 +2,10 @@
 
 Vue 3로 만든 지역별 날씨 앱입니다. 이전 단계에서 만든 컴포넌트 분리, Vue Router, Pinia 구조를 유지하면서, Mock Data 대신 **OpenWeather API의 실시간 날씨 데이터**를 Axios로 불러오도록 바꿨습니다.
 
-초기 화면에는 서울·수원·부산·제주·대전·광주의 날씨가 표시됩니다. 도시를 검색하면 OpenWeather Geocoding API로 국내 도시를 찾고, 카드의 상세보기에서 해당 도시의 상세 날씨를 확인할 수 있습니다.
 
 <img src="/screenshot/main.png" width="500" alt="섭씨로 표시된 날씨 목록 화면">
 
 <img src="/screenshot/Fahrenheit.png" width="500" alt="화씨로 표시된 날씨 목록 화면">
-
-## 시작하기
-
-### 1. 의존성 설치
-
-\`\`\`bash
-npm install
-\`\`\`
-
-### 2. OpenWeather API 키 설정
-
-[OpenWeather](https://openweathermap.org/api)에서 API 키를 발급받은 뒤, 프로젝트 최상위에 \`.env.local\` 파일을 만들고 다음 값을 넣습니다.
-
-\`\`\`env
-VITE_OPENWEATHER_API_KEY=발급받은_API_키
-\`\`\`
-
-Vite에서는 클라이언트 코드에서 사용할 환경 변수 이름이 \`VITE_\`로 시작해야 합니다. API 키는 저장소에 올리지 않도록 \`.env.local\`을 사용합니다.
-
-### 3. 개발 서버 실행
-
-\`\`\`bash
-npm run dev
-\`\`\`
-
-프로덕션 번들은 다음 명령으로 만들 수 있습니다.
-
-\`\`\`bash
-npm run build
-\`\`\`
 
 ## 구현 내용
 
@@ -55,8 +24,6 @@ const weatherApi = axios.create({
 - 도시 검색: \`/geo/1.0/direct\`에서 국내 도시 후보를 찾은 뒤 각 도시의 현재 날씨를 요청합니다.
 - 요청값: \`units=metric\`으로 섭씨 기준 데이터를 받고, \`lang=kr\`로 날씨 설명을 한국어로 받습니다.
 - 화면 데이터: API 응답을 카드에서 쓰기 쉬운 \`id\`, \`name\`, \`temp\`, \`status\`, \`humidity\`, \`wind\`, \`icon\`, \`note\` 형태로 변환합니다.
-
-API 응답의 날씨 코드에 따라 ☀️, ☁️, 🌧️, ❄️ 등의 아이콘과 상황별 안내 문구도 함께 만듭니다. 따라서 UI 컴포넌트가 OpenWeather 응답 구조에 직접 의존하지 않습니다.
 
 ### 로딩과 오류 상태
 
@@ -98,29 +65,6 @@ const temperature =
     : Math.round((celsius * 9) / 5 + 32);
 \`\`\`
 
-## 프로젝트 구조
-
-\`\`\`text
-src/
-├── components/
-│   ├── exercise/          # 검색창, 날씨 카드, 공통 카드 UI
-│   ├── UnitToggler.vue    # 전역 온도 단위 변경 버튼
-│   └── WeatherParent.vue  # 목록 조회와 화면 상태 관리
-├── router/index.js        # 페이지 경로 정의
-├── services/weather.js    # Axios 요청, 응답 변환, 오류 처리
-├── stores/                # Pinia 전역 상태
-└── views/                 # 홈, 상세, 소개, 404 페이지
-\`\`\`
-
-## 사용 기술
-
-- Vue 3 / Composition API
-- Vue Router
-- Pinia
-- Axios
-- OpenWeather Current Weather API, Geocoding API
-- Vite
-
 ## 트러블 슈팅
 
 ### Mock Data와 API 응답을 화면에 바로 연결하지 않은 이유
@@ -136,9 +80,3 @@ API 키를 서비스 파일에 직접 작성하면 공개 저장소에 키가 �
 ### 비동기 요청 중 빈 화면이 보이는 문제
 
 API 요청은 즉시 끝나지 않기 때문에 목록을 처음 렌더링할 때 데이터 배열이 비어 있습니다. 빈 배열을 “검색 결과 없음”으로 처리하면 사용자는 요청이 진행 중인지 알 수 없습니다. \`isLoading\`과 \`errorMessage\` 상태를 분리해 로딩, 성공, 실패를 각각 다른 화면으로 보여 주도록 했습니다.
-
-## AI를 사용한 부분
-
-- Axios 인스턴스와 OpenWeather 요청 파라미터 구성을 점검했습니다.
-- API 응답을 화면용 데이터로 변환하는 구조와 오류 상태 분리 방식을 확인했습니다.
-- 환경 변수로 API 키를 관리하는 Vite 방식과 구현 후 production build를 확인했습니다.
