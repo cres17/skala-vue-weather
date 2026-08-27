@@ -78,13 +78,19 @@ city.value = weatherList.find(
 
 <img src="/screenshot/not_found.png" width="500" height="1000">
 
+## AI를 사용한 부분
+
+- Vue Router의 동적 경로 문법과 Catch-all 문법이 현재 버전에서 어떻게 달라졌는지 확인했습니다.
+- `useRouter`와 `useRoute`의 역할을 구분하고, `router.push`에 도시 ID를 넣는 방식을 점검했습니다.
+- `find()`가 도시를 찾지 못했을 때 화면에서 어떤 예외 처리가 필요한지 확인했습니다.
+- 카드 클릭과 내부 버튼 클릭이 동시에 반응하는 이유가 이벤트 버블링인지 확인했습니다.
+- 구현 후 lint, production build, 브라우저 경로 전환을 검사할 때 요구사항이 빠진 부분이 없는지 체크했습니다.
+
 ## 트러블 슈팅
 
 ### Router를 만들었는데 RouterLink와 RouterView가 동작하지 않는 문제
 
-처음 라우터 파일을 만들면 `router/index.js`에 모든 경로를 적었으니 끝난 것처럼 느껴집니다. 하지만 앱 시작 파일에서 router를 등록하지 않으면 Vue는 그 라우터를 모릅니다. 이때 화면에 `RouterView`를 넣어도 아무것도 안 보이거나, 라우터 관련 경고가 나올 수 있습니다.
-
-해결은 `main.js`에서 `createApp(App)` 뒤에 `.use(router)`를 붙이는 것입니다. 이 연결이 빠지면 route 설정이 아무리 맞아도 실제 앱에서는 사용할 수 없다는 점을 확인했습니다.
+처음 라우터 파일을 만들면 `router/index.js`에 모든 경로를 적었으니 끝난 것처럼 느껴집니다. 하지만 앱 시작 파일에서 router를 등록하지 않으면 Vue는 그 라우터를 모릅니다. 이때 화면에 `RouterView`를 넣어도 아무것도 안 보이거나, 라우터 관련 경고가 나올 수 있습니다. `main.js`에서 `createApp(App)` 뒤에 `.use(router)`를 붙이는 것입니다. 이 연결이 빠지면 route 설정이 아무리 맞아도 실제 앱에서는 사용할 수 없다는 점을 확인했습니다.
 
 ### `useRouter()`와 `useRoute()`를 혼동한 문제
 
@@ -110,11 +116,3 @@ Vue Router는 같은 컴포넌트를 재사용할 수 있습니다. 예를 들�
 
 이번 구현에서는 `RouterView`에 `:key="$route.fullPath"`를 줘 주소가 바뀔 때 view를 다시 마운트하게 했습니다. 따라서 `onMounted`에서 매번 현재 `cityId` 기준으로 데이터를 찾습니다. 다른 방법으로는 `watch`로 route params 변화를 감지하는 방법도 있지만, 현재 과제에서는 마운트 시점 조회 요구사항과 맞추기 위해 key 방식을 선택했습니다.
 
-
-## AI를 사용한 부분
-
-- Vue Router의 동적 경로 문법과 Catch-all 문법이 현재 버전에서 어떻게 달라졌는지 확인했습니다.
-- `useRouter`와 `useRoute`의 역할을 구분하고, `router.push`에 도시 ID를 넣는 방식을 점검했습니다.
-- `find()`가 도시를 찾지 못했을 때 화면에서 어떤 예외 처리가 필요한지 확인했습니다.
-- 카드 클릭과 내부 버튼 클릭이 동시에 반응하는 이유가 이벤트 버블링인지 확인했습니다.
-- 구현 후 lint, production build, 브라우저 경로 전환을 검사할 때 요구사항이 빠진 부분이 없는지 체크했습니다.
