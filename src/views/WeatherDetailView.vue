@@ -224,9 +224,9 @@ watch(() => route.params.cityId, loadWeather, { immediate: true });
               <div><dt>초미세먼지</dt><dd>{{ outdoorAssessment.air.pm25 ?? "—" }} ㎍/㎥</dd></div>
             </dl>
           </template>
-          <div v-else class="index-card__unavailable" role="status">
+          <div v-else class="index-card__unavailable index-card__unavailable--air" role="status">
             <span class="index-card__unavailable-icon" aria-hidden="true">—</span>
-            <div>
+            <div class="index-card__unavailable-copy">
               <p class="index-card__unavailable-kicker">대기질 관측 상태</p>
               <strong>대기질 정보가 없습니다.</strong>
               <p>{{ outdoorAssessment?.air?.message || "대기질 정보를 불러오는 중입니다." }}</p>
@@ -635,6 +635,18 @@ h1 {
   line-height: 1.5;
 }
 
+.index-card__unavailable--air {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 24px 0 0;
+  color: #52666e;
+  line-height: 1.5;
+}
+
 .index-card__unavailable-hero {
   position: relative;
   display: flex;
@@ -722,6 +734,14 @@ h1 {
   line-height: 1.15;
 }
 
+.index-card__unavailable--air strong {
+  display: block;
+  color: #254d59;
+  font-size: clamp(1.26rem, 2vw, 1.44rem);
+  letter-spacing: -.045em;
+  line-height: 1.15;
+}
+
 .index-card__unavailable-copy > p:not(.index-card__unavailable-kicker) {
   margin: 12px 0 8px;
   color: #5c6f76;
@@ -734,6 +754,15 @@ h1 {
 .index-card__unavailable--utci small {
   display: block;
   color: #8c7770;
+  font-size: .92rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.index-card__unavailable--air small {
+  display: block;
+  color: #7b8b90;
   font-size: .92rem;
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -757,6 +786,17 @@ h1 {
   width: 138px;
   height: 138px;
   border: 18px solid rgb(232 149 120 / 15%);
+}
+
+.index-card--air:has(.index-card__unavailable--air) {
+  min-height: 338px;
+  border: 1px solid #b8dce9;
+  background:
+    linear-gradient(90deg, rgb(104 180 214 / 12%) 1px, transparent 1px),
+    linear-gradient(rgb(104 180 214 / 12%) 1px, transparent 1px),
+    linear-gradient(145deg, #eefaff, #fff 72%);
+  background-size: 20px 20px, 20px 20px, auto;
+  box-shadow: 0 18px 38px rgb(65 139 173 / 10%);
 }
 
 .index-card__unavailable:not(.index-card__unavailable--utci) {
@@ -959,10 +999,12 @@ dd {
 .index-card--air.is-orange { border-color: #efb284; border-top-color: #c87848; background: linear-gradient(145deg, #fff2e9, #fff 72%); }
 .index-card--air.is-orange strong { color: #b45d35; }
 .index-card__unavailable--utci { display: flex; align-items: flex-start; gap: 12px; padding-top: 24px; }
+.index-card__unavailable--air { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding-top: 24px; }
 .index-card__unavailable-copy { margin-top: 0; }
 .index-card__unavailable-kicker { color: #657b83 !important; }
 .index-card__unavailable-copy > p:not(.index-card__unavailable-kicker) { margin-top: 8px; font-weight: 400; }
 .index-card__unavailable--utci small { color: #7b8b90; }
+.index-card--air:has(.index-card__unavailable--air) { min-height: 250px; border: 1px solid #b8dce9; border-top: 3px solid #75b5ce; background: linear-gradient(145deg, #eefaff, #fff 72%); }
 .outdoor-check-trigger { left: calc(100% + 20px); width: 174px; padding: 18px 14px; border: 1px solid var(--line-color); border-radius: 26px; color: var(--heading-color); background: #fff; box-shadow: var(--card-shadow); font-size: 1.12rem; }
 .outdoor-check-trigger img { width: 118px; height: 118px; border-radius: 22px; box-shadow: none; }
 .outdoor-check-trigger:hover img, .outdoor-check-trigger:focus-visible img { box-shadow: none; transform: none; }
