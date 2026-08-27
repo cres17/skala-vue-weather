@@ -1,78 +1,109 @@
-# Weather Axios
+# Weather UI Library
 
-Vue 3로 만든 지역별 날씨 앱입니다. 이전 단계에서 만든 컴포넌트 분리, Vue Router, Pinia 구조를 유지하면서, Mock Data 대신 **OpenWeather API의 실시간 날씨 데이터**를 Axios로 불러오도록 바꿨습니다.
+Vue 3로 만든 지역별 날씨 앱입니다. 브랜치별 학습 과정을 누적해, 현재는 OpenWeather의 실시간 관측과 기상청 단기예보를 한 화면에서 확인할 수 있습니다.
 
+기본 목록에는 서울·수원·부산·제주·대전·광주의 현재 날씨가 표시됩니다. 도시 검색 후 상세 화면으로 이동하면 현재 기온·습도·풍속과 함께 기상청의 다음 예보 시각 기준 기온, 하늘 상태, 강수 형태·확률, 강수량, 적설을 확인할 수 있습니다.
 
-<img src="/screenshot/main.png" width="500" alt="섭씨로 표시된 날씨 목록 화면">
+## 브랜치별 구현 과정
 
-<img src="/screenshot/Fahrenheit.png" width="500" alt="화씨로 표시된 날씨 목록 화면">
+| 브랜치 | 핵심 구현 |
+| --- | --- |
+| `1-weather-mockup` | Vue 디렉티브와 이벤트로 날씨 카드, 검색 입력, 상세 영역을 구현했습니다. |
+| `2-weather-composition` | Composition API의 `ref`, `computed`, `watch`로 검색·즐겨찾기·온도 단위를 반응형으로 관리했습니다. |
+| `3-weather-component` | 검색창, 날씨 카드, 공통 대시보드 카드를 컴포넌트로 분리하고 props, emits, slot을 적용했습니다. |
+| `4-weather-router` | Vue Router와 lazy loading으로 목록·상세·소개·404 페이지 및 URL 기반 상세 보기를 만들었습니다. |
+| `5-weather-store` | Pinia로 온도 단위와 즐겨찾기 상태를 전역 관리했습니다. |
+| `6-weather-axios` | Mock Data를 OpenWeather Current Weather·Geocoding API의 실시간 데이터로 교체했습니다. |
+| `7-weather-ui-library` | 기상청 API 허브 단기예보를 상세 화면에 더해, 현재 관측 외의 예보 정보를 제공합니다. |
 
-## 구현 내용
+## 시작하기
 
-### Axios로 OpenWeather API 호출
+```bash
+npm install
+npm run dev
+```
 
-\`src/services/weather.js\`에 Axios 인스턴스를 만들고, API 요청과 응답 변환 코드를 화면 컴포넌트 밖으로 분리했습니다. 화면은 \`getWeatherList\`, \`getWeatherForCity\`, \`searchCities\` 함수만 호출하므로 HTTP 요청 세부 사항을 알 필요가 없습니다.
+프로젝트 최상위에 `.env.local`을 만들고 `.env.example`을 참고해 키를 설정합니다.
 
+```env
+VITE_OPENWEATHER_API_KEY=OpenWeather_API_키
+VITE_KMA_AUTH_KEY=기상청_API_허브_인증키
+```
 
-const weatherApi = axios.create({
-  baseURL: "https://api.openweathermap.org/data/2.5",
-  timeout: 10_000,
-});
+- `VITE_OPENWEATHER_API_KEY`: [OpenWeather](https://openweathermap.org/api)의 API 키입니다.
+- `VITE_KMA_AUTH_KEY`: [기상청 API 허브 단기예보](https://apihub.kma.go.kr/apiList.do?seqApi=10)의 `authKey`입니다. `getVilageFcst` 사용을 신청한 뒤 발급받습니다.
 
+Vite에서 브라우저 코드가 읽는 환경 변수는 반드시 `VITE_`로 시작해야 합니다. 기존에 `KMA_API_KEY`로 저장했다면 `VITE_KMA_AUTH_KEY`로 이름을 바꿔 주세요. `.env.local`은 Git에 포함하지 않습니다.
 
-- 초기 목록: 도시별 위도·경도로 \`/weather\`를 호출합니다.
-- 도시 검색: \`/geo/1.0/direct\`에서 국내 도시 후보를 찾은 뒤 각 도시의 현재 날씨를 요청합니다.
-- 요청값: \`units=metric\`으로 섭씨 기준 데이터를 받고, \`lang=kr\`로 날씨 설명을 한국어로 받습니다.
-- 화면 데이터: API 응답을 카드에서 쓰기 쉬운 \`id\`, \`name\`, \`temp\`, \`status\`, \`humidity\`, \`wind\`, \`icon\`, \`note\` 형태로 변환합니다.
+> 이 프로젝트는 브라우저에서 API를 호출하는 학습용 앱입니다. 배포 환경에서는 API 키 보호와 요청 제어를 위해 서버 또는 서버리스 프록시를 권장합니다.
 
-### 로딩과 오류 상태
+프로덕션 번들은 다음 명령으로 확인합니다.
 
-\`WeatherParent.vue\`는 화면을 열 때 \`onMounted\`에서 날씨 목록을 비동기로 불러옵니다. 요청 중에는 로딩 안내를 표시하고, 실패하면 오류 메시지와 재시도 버튼을 보여 줍니다. 상세 화면도 같은 방식으로 현재 도시의 날씨를 요청합니다.
+```bash
+npm run build
+```
 
-서비스 레이어에서는 다음과 같이 사용자가 이해하기 쉬운 오류로 변환합니다.
+## 주요 기능
 
-- API 키가 없거나 잘못된 경우: API 키 확인 안내
-- 요청 한도 초과(429): 잠시 후 재시도 안내
-- 그 밖의 요청 실패: API 메시지 또는 일반적인 로딩 실패 안내
+### 실시간 날씨와 국내 도시 검색
 
-### URL을 기준으로 한 상세 화면
+`src/services/weather.js`의 Axios 서비스 레이어가 OpenWeather API 응답을 화면용 데이터로 변환합니다.
 
-상세 페이지의 주소는 \`/weather/:cityId\`입니다. 기본 도시의 ID는 서비스 레이어에 정의해 두었고, 검색 결과는 도시 이름·위도·경도를 query string으로 함께 전달합니다. 상세 화면은 주소를 기준으로 다시 API를 호출하므로 새로고침하거나 URL을 공유해도 같은 도시를 표시할 수 있습니다.
+- 초기 지역별 목록: 위도·경도 기반 현재 날씨 조회
+- 검색: Geocoding API로 국내 도시를 찾은 뒤 현재 날씨 조회
+- 표시 단위: 섭씨 원본을 유지하고, Pinia 설정에 따라 화씨로 변환
+- 오류 처리: API 키 오류, 요청 한도 초과, 일반 요청 실패를 사용자 안내 문구로 변환
 
-router.push({
-  name: "weather-detail",
-  params: { cityId: city.id },
-  query: { name: city.name, lat: city.lat, lon: city.lon },
-});
+### 기상청 단기예보 상세 정보
 
-\`watch\`로 \`cityId\` 변화를 감지해, 상세 화면에서 다른 도시 URL로 이동해도 날씨를 다시 불러옵니다.
+상세 페이지는 현재 날씨와 기상청 단기예보를 병렬로 요청합니다. 위도·경도를 기상청 격자 좌표(`nx`, `ny`)로 변환하고, 한국 표준시 기준으로 이미 발표된 가장 최근 예보 발표 시각을 자동으로 선택합니다.
 
-### Pinia로 공유 상태 관리
+기상청 응답 중 다음 예보 시각의 항목을 골라 표시합니다.
 
-온도 단위와 즐겨찾기 목록은 여러 화면에서 사용하므로 Pinia store로 관리합니다.
+- 예보 기온 (`TMP`)
+- 하늘 상태 (`SKY`)와 강수 형태 (`PTY`)
+- 강수 확률 (`POP`), 1시간 강수량 (`PCP`), 적설 (`SNO`)
+- 습도 (`REH`), 풍속 (`WSD`)
 
-- \`configStore\`: 섭씨/화씨 단위와 표시 기호를 관리합니다.
-- \`favoriteStore\`: 즐겨찾기 도시 ID, 개수, 추가·해제 동작을 관리합니다.
+기상청 API 키가 없거나 해당 요청만 실패한 경우에는 상세 화면에 안내를 표시하고 OpenWeather 현재 날씨는 그대로 유지합니다.
 
-원본 날씨 데이터는 섭씨로 유지하고 화면에 표시할 때만 화씨로 변환합니다. 상단의 단위 버튼을 누르면 목록과 상세 화면의 온도가 함께 갱신됩니다.
+### URL 기반 상세 페이지
 
-const temperature =
-  configStore.unit === "celsius"
-    ? celsius
-    : Math.round((celsius * 9) / 5 + 32);
+상세 주소는 `/weather/:cityId`입니다. 검색 결과는 도시명·위도·경도를 query string으로 함께 전달하므로, 새로고침하거나 주소를 공유해도 같은 위치의 데이터를 다시 조회합니다.
 
-## 트러블 슈팅
+## 프로젝트 구조
 
-### Mock Data와 API 응답을 화면에 바로 연결하지 않은 이유
+```text
+src/
+├── components/
+│   ├── exercise/          # 검색창, 날씨 카드, 공통 카드 UI
+│   ├── UnitToggler.vue    # 온도 단위 변경 버튼
+│   └── WeatherParent.vue  # 목록 조회와 화면 상태 관리
+├── router/index.js        # 페이지 경로 정의
+├── services/weather.js    # OpenWeather·기상청 API 요청과 응답 변환
+├── stores/                # Pinia 전역 상태
+└── views/                 # 홈, 상세, 소개, 404 페이지
+```
 
-Mock Data는 필요한 속성을 원하는 이름으로 직접 정할 수 있었지만, API 응답은 \`main.temp\`, \`weather[0].description\`, \`wind.speed\`처럼 중첩된 구조입니다. 이 구조를 컴포넌트에서 바로 사용하면 API를 변경하거나 누락 데이터를 처리할 때 여러 화면을 수정해야 합니다.
+## 사용 기술
 
-그래서 \`toWeatherCity\`에서 응답을 앱에서 사용할 도시 객체로 한 번 변환했습니다. 카드와 상세 화면은 같은 형태의 데이터를 받으므로, API 호출 위치가 달라도 UI 코드는 단순하게 유지됩니다.
+- Vue 3 / Composition API
+- Vue Router
+- Pinia
+- Axios
+- OpenWeather Current Weather API / Geocoding API
+- 기상청 API 허브 단기예보 API (`getVilageFcst`)
+- Vite
 
-### API 키를 코드에 직접 넣지 않은 이유
+## 확인 방법
 
-API 키를 서비스 파일에 직접 작성하면 공개 저장소에 키가 노출될 수 있습니다. \`import.meta.env.VITE_OPENWEATHER_API_KEY\`로 환경 변수에서만 읽도록 하고, 키가 없으면 요청 전에 명확한 안내 오류를 발생시키도록 했습니다.
+1. `.env.local`에 두 API 키를 설정합니다.
+2. 목록에서 도시를 선택해 상세 페이지로 이동합니다.
+3. 현재 관측 정보 아래의 **기상청 단기예보** 영역에서 예보 시각과 8개 예보 지표를 확인합니다.
+4. `npm run build`로 production build가 성공하는지 확인합니다.
 
-### 비동기 요청 중 빈 화면이 보이는 문제
+## AI 사용 범위
 
-API 요청은 즉시 끝나지 않기 때문에 목록을 처음 렌더링할 때 데이터 배열이 비어 있습니다. 빈 배열을 “검색 결과 없음”으로 처리하면 사용자는 요청이 진행 중인지 알 수 없습니다. \`isLoading\`과 \`errorMessage\` 상태를 분리해 로딩, 성공, 실패를 각각 다른 화면으로 보여 주도록 했습니다.
+- 기상청 단기예보 API의 최신 요청 형식과 예보 항목을 확인했습니다.
+- 위경도에서 기상청 격자 좌표로 변환하는 공식을 구현에 적용했습니다.
+- API 응답을 화면용 데이터로 분리하고, 기상청 예보 실패가 현재 날씨 화면을 막지 않도록 오류 처리를 구성했습니다.

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { getCityById, getWeatherForCity } from "../services/weather";
+import { getCityById, getWeatherDetailForCity } from "../services/weather";
 import { useConfigStore } from "../stores/configStore";
 
 const route = useRoute();
@@ -17,6 +17,15 @@ const formattedTemperature = computed(() => {
       ? city.value.temp
       : Math.round((city.value.temp * 9) / 5 + 32);
   return `${temperature}${configStore.unitSymbol}`;
+});
+
+const formattedForecastTemperature = computed(() => {
+  const temperature = city.value?.forecast?.temperature;
+
+  if (temperature === null || temperature === undefined) return "-";
+  if (configStore.unit === "celsius") return `${temperature}°C`;
+
+  return `${Math.round((temperature * 9) / 5 + 32)}°F`;
 });
 
 function getRouteCity() {
@@ -57,7 +66,7 @@ async function loadWeather() {
   errorMessage.value = "";
 
   try {
-    city.value = await getWeatherForCity(cityConfig);
+    city.value = await getWeatherDetailForCity(cityConfig);
   } catch (error) {
     city.value = null;
     errorMessage.value = error.message;
@@ -66,7 +75,7 @@ async function loadWeather() {
   }
 }
 
-watch(() => route.params.cityId, loadWeather, { immediate: true });
+watch(() => route.fullPath, loadWeather, { immediate: true });
 </script>
 
 <template>
@@ -103,6 +112,52 @@ watch(() => route.params.cityId, loadWeather, { immediate: true });
           <dd>{{ city.status }}</dd>
         </div>
       </dl>
+
+      <section class="forecast" aria-labelledby="forecast-title">
+        <div class="forecast__heading">
+          <div>
+            <p>기상청 단기예보</p>
+            <h2 id="forecast-title">{{ city.forecast?.forecastAt || "예보 준비 중" }}</h2>
+          </div>
+          <span v-if="city.forecast">{{ city.forecast.announcedAt }} 발표</span>
+        </div>
+
+        <dl v-if="city.forecast" class="forecast__metrics">
+          <div>
+            <dt>예보 기온</dt>
+            <dd>{{ formattedForecastTemperature }}</dd>
+          </div>
+          <div>
+            <dt>하늘 상태</dt>
+            <dd>{{ city.forecast.sky }}</dd>
+          </div>
+          <div>
+            <dt>강수 형태</dt>
+            <dd>{{ city.forecast.precipitationType }}</dd>
+          </div>
+          <div>
+            <dt>강수 확률</dt>
+            <dd>{{ city.forecast.precipitationProbability }}</dd>
+          </div>
+          <div>
+            <dt>1시간 강수량</dt>
+            <dd>{{ city.forecast.precipitation }}</dd>
+          </div>
+          <div>
+            <dt>적설</dt>
+            <dd>{{ city.forecast.snowfall }}</dd>
+          </div>
+          <div>
+            <dt>습도</dt>
+            <dd>{{ city.forecast.humidity }}</dd>
+          </div>
+          <div>
+            <dt>풍속</dt>
+            <dd>{{ city.forecast.windSpeed }}</dd>
+          </div>
+        </dl>
+        <p v-else class="forecast__error">{{ city.kmaError }}</p>
+      </section>
     </section>
 
     <section v-else class="detail-card detail-card--empty">
@@ -199,6 +254,66 @@ h1 {
   background: #f1f8f9;
 }
 
+.forecast {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid var(--line-color);
+}
+
+.forecast__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.forecast__heading p {
+  margin: 0 0 5px;
+  color: #238c9f;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.forecast__heading h2 {
+  margin: 0;
+  color: var(--heading-color);
+  font-size: 1.35rem;
+}
+
+.forecast__heading > span {
+  color: #7a929c;
+  font-size: 0.76rem;
+}
+
+.forecast__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+
+.forecast__metrics div {
+  min-height: 92px;
+  padding: 14px;
+  border-radius: 15px;
+  background: #f8f6ed;
+}
+
+.forecast__metrics dd {
+  font-size: 0.9rem;
+}
+
+.forecast__error {
+  margin: 0;
+  padding: 16px;
+  border-radius: 14px;
+  color: #8d6d36;
+  background: #fff7e8;
+  font-size: 0.9rem;
+}
+
 dt {
   margin-bottom: 8px;
   color: #7a929c;
@@ -232,6 +347,15 @@ dd {
 
   .detail-card__metrics {
     grid-template-columns: 1fr;
+  }
+
+  .forecast__heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .forecast__metrics {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
