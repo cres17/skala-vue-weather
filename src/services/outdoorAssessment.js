@@ -2,7 +2,7 @@ import axios from "axios";
 
 const outdoorApi = axios.create({
   baseURL: "/api",
-  timeout: 8_000,
+  timeout: 18_000,
 });
 
 function createDecisionFallback(thermal, air) {

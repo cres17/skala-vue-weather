@@ -120,11 +120,11 @@ def required_env(name):
     return value
 
 
-def request_json(url, params):
+def request_json(url, params, timeout=10):
     query = urllib.parse.urlencode(params)
     request = urllib.request.Request(f"{url}?{query}", headers={"User-Agent": "outcast-weather/1.0"})
     try:
-        with urllib.request.urlopen(request, timeout=10) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
         body = error.read().decode("utf-8", errors="ignore")
@@ -202,6 +202,23 @@ def air_quality_grade(value):
     return grade if 1 <= grade <= 4 else None
 
 
+def air_quality_number(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number >= 0 else None
+
+
+def particulate_grade(pm10, pm25):
+    grades = []
+    if pm10 is not None:
+        grades.append(1 if pm10 <= 30 else 2 if pm10 <= 80 else 3 if pm10 <= 150 else 4)
+    if pm25 is not None:
+        grades.append(1 if pm25 <= 15 else 2 if pm25 <= 35 else 3 if pm25 <= 75 else 4)
+    return max(grades) if grades else None
+
+
 def build_air_index(latitude, longitude):
     api_key = os.getenv("AIR_KOREA_API_KEY")
     if not api_key:
@@ -223,6 +240,7 @@ def build_air_index(latitude, longitude):
                 "dataTerm": "DAILY",
                 "ver": "1.4",
             },
+            timeout=15,
         )
     except ValueError as error:
         return {"available": False, "message": f"대기질 정보를 불러오지 못했습니다. ({error})"}
@@ -232,8 +250,15 @@ def build_air_index(latitude, longitude):
         return {"available": False, "message": "해당 측정소의 대기질 관측값이 없습니다."}
 
     item = items[0]
-    grades = [air_quality_grade(item.get(key)) for key in ("khaiGrade", "pm10Grade", "pm25Grade")]
+    pm10 = air_quality_number(item.get("pm10Value"))
+    pm25 = air_quality_number(item.get("pm25Value"))
+    grades = [
+        air_quality_grade(item.get(key))
+        for key in ("khaiGrade", "pm10Grade", "pm25Grade", "pm10Grade1h", "pm25Grade1h")
+    ]
     grade = max((value for value in grades if value is not None), default=None)
+    if grade is None:
+        grade = particulate_grade(pm10, pm25)
     if grade is None:
         return {"available": False, "message": "대기질 등급을 확인할 수 없습니다."}
 
@@ -244,8 +269,8 @@ def build_air_index(latitude, longitude):
         "observedAt": item.get("dataTime"),
         "grade": grade,
         "label": labels[grade],
-        "pm10": item.get("pm10Value"),
-        "pm25": item.get("pm25Value"),
+        "pm10": pm10,
+        "pm25": pm25,
         "khaiValue": item.get("khaiValue"),
     }
 
