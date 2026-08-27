@@ -37,7 +37,7 @@ npm run build
 
 빌드가 완료되면 `dist/` 폴더에 정적 파일이 생성됩니다.
 
-<img src="./screenshot/build_photo.png" width="700" alt="배포 스크린샷">
+<img src="./screenshot/Github_pages_build_1.png" width="700" alt="배포 스크린샷">
 
 ### 2. GitHub Pages 배포 및 확인
 
@@ -57,3 +57,5 @@ GitHub Pages는 정적 파일을 호스팅하는 서비스입니다. GitHub Acti
 5. 배포 주소에서 서비스가 정상적으로 열리는지 확인합니다.
 
    `https://cres17.github.io/skala-vue-weather/`
+
+<img src="./screenshot/Github_pages_build_2.png" width="700" alt="배포 스크린샷">
