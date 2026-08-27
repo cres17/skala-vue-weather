@@ -26,10 +26,19 @@
 
 날짜 카드는 총 7개(+4~+10일)입니다. +4~+7일은 `오전`과 `오후` 예보를 각각 줄바꿈해 표시하고, +8~+10일은 하루 예보로 표시합니다. 따라서 실제 기상청 제공 주기와 화면 표현이 맞습니다.
 
+
+<img src="/screenshot/weekly.png" width="500" height="1000">
+
 ### 3. 지도 기반 도시 선택
 
 Leaflet 지도에 국내 행정구역 레이어를 올리고, 시·도와 시·군·구를 선택할 수 있게 구성했습니다.
 선택한 도시는 지도 아래의 현재 날씨와 세로형 중기예보 패널에 바로 반영됩니다. 상세 페이지로 이동하는 버튼은 현재 날씨 카드 아래에 배치했습니다.
+
+
+<img src="/screenshot/map_do.png" width="500" height="1000">
+<img src="/screenshot/map_city.png" width="500" height="1000">
+<img src="/screenshot/map_info.png" width="500" height="1000">
+
 
 ### 4. 상세 페이지와 외출 판단
 
@@ -44,14 +53,9 @@ Leaflet 지도에 국내 행정구역 레이어를 올리고, 시·도와 시·�
 - 예보 안내 문구는 `좌우로 스크롤하세요`로 통일했고, 스크롤 버튼과 분리해 겹치지 않게 했습니다.
 - 긴 오전·오후 예보 문구는 말줄임표 대신 줄바꿈으로 보여 줍니다.
 
-### 5. Outcast UI와 배포 구조
 
-서비스 명칭을 **Outcast**로 변경하고, 큰 글자와 넉넉한 간격, 반투명 고정 내비게이션을 중심으로 화면을 다시 구성했습니다. 모바일에서는 카드와 예보 목록의 폭·스크롤 방향이 자연스럽게 바뀝니다.
-
-모바일 상세 화면에서는 UTCI와 대기질 카드를 세로로 배치하고, 현재 관측 정보는 읽기 쉬운 3칸 요약으로 유지했습니다. 외출 판단 버튼은 예보 아래에 두어 제목과 스크롤 버튼을 가리지 않습니다.
-
-Vercel 배포를 위해 Python Serverless Function과 SPA rewrite를 추가했습니다. 따라서 `/map`, `/weather/seoul`처럼 직접 주소로 진입해도 Vue Router 화면을 열 수 있습니다.
-
+<img src="/screenshot/outbutton.png" width="500" height="1000">
+<img src="/screenshot/outbutton_detail.png" width="500" height="1000">
 
 ## 트러블 슈팅
 
