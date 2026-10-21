@@ -1,3 +1,5 @@
+<div align="center">
+
 # Outcast — Vue 날씨 실습
 
 ![Vue 3](https://img.shields.io/badge/Vue%203-4FC08D?style=flat&logoColor=black&logo=vuedotjs)
@@ -10,6 +12,8 @@
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logoColor=white&logo=vercel)
 ![기상청 API 허브](https://img.shields.io/badge/%EA%B8%B0%EC%83%81%EC%B2%AD%20API%20%ED%97%88%EB%B8%8C-2B6CB0?style=flat&logoColor=white)
 ![에어코리아](https://img.shields.io/badge/%EC%97%90%EC%96%B4%EC%BD%94%EB%A6%AC%EC%95%84-1F7A5C?style=flat&logoColor=white)
+
+</div>
 
 SKALA Vue 과정의 날씨 앱 과제를 단계별 브랜치로 쌓아 만든 저장소입니다. 최종 앱 **Outcast**는 지도에서 지역을 고르면 기상청 관측값과 중기예보, 에어코리아 대기질을 보여 주고, 체감온도(UTCI)와 대기질 · 강수로 "지금 밖에 나가도 되는지"를 판단해 줍니다.
 
