@@ -4,6 +4,62 @@
 지도에서 시·군·구를 선택하거나 도시를 검색하면, 가까운 기상청 관측소의 현재 관측값과
 기상청 중기예보를 확인할 수 있습니다.
 
+
+## 실행 방법
+
+이 앱 코드는 `9-weather-final` 브랜치에 있습니다. `main`에는 과제 목차만 있습니다.
+
+### 요구사항
+
+- Node.js `^20.19.0 || >=22.12.0`과 npm
+- Python 3와 `requirements.txt`의 `utci==1.0.0`
+- 기상청 API 허브 키 `KMA_API_KEY`
+- AirKorea 서비스 키 `AIR_KOREA_API_KEY`
+
+### macOS·Linux 로컬 실행
+
+```bash
+git clone --branch 9-weather-final https://github.com/cres17/skala-vue-weather.git
+cd skala-vue-weather
+npm ci
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp .env.example .env
+```
+
+`.env`에 두 키를 설정합니다. 서버가 이 파일을 읽으며 키를 프런트엔드의 `VITE_*` 변수에 넣지 않습니다.
+
+```dotenv
+KMA_API_KEY=
+AIR_KOREA_API_KEY=
+```
+
+가상환경을 활성화한 같은 터미널에서 실행합니다.
+
+```bash
+npm run dev
+```
+
+이 명령은 `python3 server/app.py`와 Vite를 함께 실행합니다. 브라우저 주소는 Vite 출력에서 확인합니다. Windows에서 `python3` 명령이 없다면 가상환경을 활성화하고 별도 터미널에서 `python server/app.py`, `npm run vite:dev`를 각각 실행하세요.
+
+### 빌드와 배포
+
+```bash
+npm run build
+npm run preview
+```
+
+build는 프런트엔드 산출물을 만들며, preview도 Python 서버를 함께 실행합니다. 정적 파일만 배포해서는 Python API가 동작하지 않습니다. Vercel 구성은 [vercel.json](vercel.json), API 진입점은 [api](api), 서버 구현은 [server/app.py](server/app.py)에 있습니다. 배포 환경에도 같은 이름의 키를 별도로 설정해야 합니다.
+
+`npm run lint`는 현재 `--fix`가 포함되어 파일을 수정할 수 있습니다. 별도의 자동 테스트 명령은 package.json에 없습니다.
+
+### 현재 데이터 범위
+
+가까운 관측소는 서버에 등록한 기상청 좌표 13개 중에서 선택합니다. AirKorea도 코드에 등록된 측정소 목록을 사용합니다. 전국 모든 관측소를 실시간 검색하거나 행정구역 전체 평균을 계산하는 방식은 아닙니다.
+
+UTCI 패키지가 없으면 날씨 API 서버 전체를 종료하는 대신 체감온도 계산을 사용할 수 없는 상태로 처리합니다. 키 권한·관측 시각·외부 API 응답에 따라 일부 정보가 제공되지 않을 수 있습니다.
+
 ## 7번 브랜치 대비 추가·변경한 기능
 
 ### 1. 기상청 단일 데이터 소스
