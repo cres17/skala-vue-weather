@@ -320,7 +320,12 @@ def get_utci_stress(value):
         return "약한 한랭 스트레스"
     if value > -13:
         return "중간 한랭 스트레스"
-    return "강한 한랭 스트레스"
+    # UTCI assessment scale: -27~-13 strong, -40~-27 very strong, below -40 extreme cold stress.
+    if value > -27:
+        return "강한 한랭 스트레스"
+    if value > -40:
+        return "매우 강한 한랭 스트레스"
+    return "극심한 한랭 스트레스"
 
 
 def get_nearest_kma_station(latitude, longitude):
